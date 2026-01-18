@@ -799,7 +799,7 @@ L00120e()
 	SR_SHOT実行_CMD状態変化・表示(WORK_1P_0000, WORK_2P_0000);
 	SR_キャラ動作関数実行(WORK_1P_0000, SUB_直立);
 	SR_キャラ動作関数実行(WORK_2P_0000, SUB_直立);
-	L003f12(WORK_1P_0000, WORK_2P_0000);
+	SR_バトルフレーム前半処理_ゲージ表示あり(WORK_1P_0000, WORK_2P_0000);
 	SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
 	SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
 }
@@ -996,7 +996,7 @@ L001806(p1, p2)
 	p2->0a42_攻撃過程値 = 0;
 
 	for (d3 = 0; d3 <= 39; d3++) {
-		L003f12(WORK_1P_0000, WORK_2P_0000);
+		SR_バトルフレーム前半処理_ゲージ表示あり(WORK_1P_0000, WORK_2P_0000);
 		SR_SHOT実行_CMD状態変化・表示(WORK_1P_0000, WORK_2P_0000)
 
 		SR_キャラ動作関数実行(p1, SUB_直立);
@@ -1014,7 +1014,7 @@ L001806(p1, p2)
 	p2->0a42_攻撃過程値 = 0;
 
 	do {
-		L003f12(WORK_1P_0000, WORK_2P_0000);
+		SR_バトルフレーム前半処理_ゲージ表示あり(WORK_1P_0000, WORK_2P_0000);
 		SR_SHOT実行_CMD状態変化・表示(WORK_1P_0000, WORK_2P_0000);
 
 		SR_キャラ動作関数実行(p1, SUB_判定負け);
@@ -1046,7 +1046,7 @@ L00195a(p1, p2)
 
 L001986:
 	do {
-		L003f12(WORK_1P_0000, WORK_2P_0000);
+		SR_バトルフレーム前半処理_ゲージ表示あり(WORK_1P_0000, WORK_2P_0000);
 
 		WORK_1P_1324_思考完了 = 0;
 		WORK_2P_1324_思考完了 = 0;
@@ -1082,7 +1082,7 @@ L001986:
 		WORK_2P_1756_セル非表示フラグ = 0
 		WORK_1P_1756_セル非表示フラグ = 0;
 
-		L00cb2a(WORK_1P_0000, WORK_2P_0000);
+		SR_身体表示SP番号割り当て(WORK_1P_0000, WORK_2P_0000);
 
 		SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
 		SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
@@ -1124,7 +1124,7 @@ L001b72:
 	p1->0a42_攻撃過程値 = 0;
 
 	for (d3 = 0; d3 <= 39; d3++) {
-		L003f12(WORK_1P_0000, WORK_2P_0000);
+		SR_バトルフレーム前半処理_ゲージ表示あり(WORK_1P_0000, WORK_2P_0000);
 
 		WORK_1P_1324_思考完了 = 0;
 		WORK_2P_1324_思考完了 = 0;
@@ -1155,7 +1155,7 @@ L001b72:
 		WORK_2P_1756_セル非表示フラグ = 0;
 		WORK_1P_1756_セル非表示フラグ = 0;
 
-		L00cb2a(WORK_1P_0000, WORK_2P_0000);
+		SR_身体表示SP番号割り当て(WORK_1P_0000, WORK_2P_0000);
 
 		SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
 		SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
@@ -1267,24 +1267,13 @@ L001e80:
 	movem.l	(sp)+,d3/a3-a6
 	rts
 
-L001e86:
-	move.l	a3,-(sp)
-	movea.l	($0008,sp),a3
-	clr.w	($0aca,a3)
-	clr.w	($01c8,a3)
-	pea.l	($0100)			;IVC_ゾンビ
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_00c0_状態設定_永続無敵)
-	addq.w	#8,sp
-	cmpi.w	#$0065,($09e2,a3)
-	beq	L001eae
-	moveq.l	#$00,d0
-	bra	L001eb0
-L001eae:
-	moveq.l	#$01,d0
-L001eb0:
-	movea.l	(sp)+,a3
-	rts
+L001e86(p1)
+{
+	p1->0aca_xxxx = 0;
+	p1->01c8_xxxx = 0;
+	SYSCALL_00c0_状態設定_永続無敵(p1, IVC_ゾンビ);
+	return p1->09e2_動作ID == ACT_待機 ? 0 : 1;
+}
 
 L001eb4(p1, p2)
 {
@@ -3473,7 +3462,7 @@ L003e3e:
 	movem.l	(sp)+,d3-d4/a3-a5
 	rts
 
-L003f12(p1, p2)
+SR_バトルフレーム前半処理_ゲージ表示あり(p1, p2)
 {
 	SR_キャラ動作関数実行(p1, OPT_サイクル);
 	SR_キャラ動作関数実行(p2, OPT_サイクル);
@@ -3501,8 +3490,8 @@ L003f12(p1, p2)
 	if (p2->0aa8_残像フラグ) SR_キャラクタ身体・残像・影表示(p2, 1);
 
 	if (SFSYSINFO_0078_ヒットストップ == 0) {
-		p2->0a88_残像フラグ = 0;
-		p1->0a88_残像フラグ = 0;
+		p2->0aa8_残像フラグ = 0;
+		p1->0aa8_残像フラグ = 0;
 	}
 
 	SR_コンボ数表示(p1);
@@ -3520,8 +3509,8 @@ L00402c(p1, p2)
 	if (p1->0a76_砂煙表示カウンタ > 0) SR_キャラクター砂煙表示(p1);
 	if (p2->0a76_砂煙表示カウンタ > 0) SR_キャラクター砂煙表示(p2);
 
-	if (p1->0aa8_残像) SR_キャラクタ身体・残像・影表示(p1);
-	if (p2->0aa8_残像) SR_キャラクタ身体・残像・影表示(p2);
+	if (p1->0aa8_残像) SR_キャラクタ身体・残像・影表示(p1, 1);
+	if (p2->0aa8_残像) SR_キャラクタ身体・残像・影表示(p2, 1);
 
 	if (SFSYSINFO_0078_ヒットストップ == 0) {
 		p1->0aa8_残像 = 0;
@@ -4073,7 +4062,7 @@ L004cb2()
 	else
 		SR_最終ラスター割込み終了待ち();
 
-	L003f12(WORK_1P_0000, WORK_2P_0000);
+	SR_バトルフレーム前半処理_ゲージ表示あり(WORK_1P_0000, WORK_2P_0000);
 
 	SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
 	SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
@@ -6456,61 +6445,25 @@ L006b78:
 	bne	L006c68
 L006b90:
 	L009c70();
-	tst.w	($01cc,a4)	;p1->01cc_敗北状態
-	beq	L006bb2
-	d0 = L001e86(p1, p2);
-	tst.w	d0
-	beq	L006bf2
-	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	bra	L006bcc
-L006bb2:
-	tst.w	($01cc,a5)	;p1->01cc_敗北状態
-	beq	L006bde
-	d0 = L001e86(p2, p2);
-	tst.w	d0
-	beq	L006bf2
-	move.l	a5,-(sp)
-	move.l	a4,-(sp)
-L006bcc:
-	jsr	(L001308)
-	addq.w	#8,sp
-	tst.w	d0
-	beq	L006bf2
-L006bd8:
-	moveq.l	#$01,d0
-	bra	L007006			;return 1;
-L006bde:
-	tst.w	(L0690b4)
-	beq	L006bf2
-	L001eb4(p1, p2);
+	if (p1->01cc_敗北状態) {
+		if (L001e86(p1, p2) && L001308(p1, p2)) return 1;
+	} else if (p2->01cc_敗北状態) {
+		if (L001e86(p2, p1) && L001308(p2, p1)) return 1;
+	} else if (L0690b4) {
+		L01eb4(p1, p2);
+	}
 L006bf2:
 	L0045e6();
-	tst.w	($01cc,a4)		;p1->01cc_敗北状態
-	bne	L006c22
-	tst.w	($01cc,a5)		;p2->01cc_敗北状態
-	bne	L006c22
-	SR_状態設定_相対方向(p1, p2);
-	SR_状態設定_相対方向(p2, p1);
-	SR_ラウンドタイマーカウントダウン＆表示();
-	bra	L006c50
-L006c22:
-	tst.w	($002e,a4)		;p1->002e_残り体力
-	bge	L006c2e
-	tst.w	($002c,a5)		;p2->002c_勝ち数
-	bgt	L006c3a
-L006c2e:
-	tst.w	($002e,a5)		;p2->002e_残り体力
-	bge	L006c50
-	tst.w	($002c,a4)		;p1->002c_勝ち数
-	ble	L006c50
-L006c3a:
-	tst.w	(SFSYSINFO_000c_ゲームスピード)
-	beq	L006c4a
-	SR_タイマーD割込み処理終了待ち();
-	bra	L006c50
-L006c4a:
-	jsr	(SR_最終ラスター割込み終了待ち)
+	if (p1->01cc_敗北状態 == 0 && p2->01cc_敗北状態 == 0) {
+		SR_状態設定_相対方向(p1, p2);
+		SR_状態設定_相対方向(p2, p1);
+		SR_ラウンドタイマーカウントダウン＆表示();
+	} else if ((p1->002e_残り体力 < 0 && p2->002c_勝ち数 <= 0) || (p2->002e_残り体力 < 0 && p1->002c_勝ち数 <= 0)) {
+		if (SFSYSINFO_000c_ゲームスピード)
+			SR_タイマーD割込み処理終了待ち();
+		else
+			SR_最終ラスター割込み終了待ち();
+	}
 L006c50:
 	d0 = L004f2e();
 	tst.w	d0
@@ -6539,9 +6492,9 @@ L006ca4:
 L006cc4:
 	subq.w	#1,(L01fef2)
 	tst.w	(L01fef2)
-	bgt	L006cda
+	bgt	@f
 	move.w	#$003c,(L01fef2)
-L006cda:
+@@:
 	L009c70();
 	tst.l	($0ad0,a4)	;p1->0ad0_xxxx
 	bne	L006e66
@@ -6559,14 +6512,14 @@ L006cda:
 	SYSCALL_01e8_Scr設定_ＢＧマスク(1, 1);
 	tst.w	(L0690b4)
 	beq	L006d42
-	pea.l	(L006b66)
+	pea.l	(L006b66)			;"Timeover"
 	bra	L006e82
 L006d42:
 	tst.w	($002e,a4)
 	bge	L006d58
 	tst.w	($002e,a5)
 	bge	L006d58
-	pea.l	(L006b72)
+	pea.l	(L006b72)			;"Draw"
 	bra	L006e82
 L006d58:
 	SR_勝敗ログ文字列生成(p2, p1, d4);
@@ -6794,9 +6747,9 @@ L00705e(d0, a6)
 
 	if (WORK_3P_0ac2_気集中 == 0 && WORK_4P_0ac2_気集中 == 0) {
 		if (WORK_3P_0A90_燃焼状態 > 0)
-			L019f60(WORK_3P_0000);
+			SR_身体燃焼パレット_カウンタ更新・適用(WORK_3P_0000);
 		if (WORK_4P_0a90_燃焼状態 > 0)
-			L019f60(WORK_4P_0000);
+			SR_身体燃焼パレット_カウンタ更新・適用(WORK_4P_0000);
 
 		if (WORK_3P_172e_無敵持続カウンタ > 0) {
 			if (--WORK_3P_172e_無敵持続カウンタ == 0)
@@ -6816,7 +6769,7 @@ L00705e(d0, a6)
 	WORK_4P_1756_セル非表示フラグ = 0;
 	WORK_3P_1756_セル非表示フラグ = 0;
 
-	L00cb2a(WORK_3P_0000, WORK_4P_0000);
+	SP番号割り当て(WORK_3P_0000, WORK_4P_0000);
 
 	if (WORK_3P_0ac2_気集中 == 0)
 		L00c0be(WORK_3P_0000, WORK_4P_0000);
@@ -6874,7 +6827,7 @@ L007342:
 		d4 = 0;
 		d3 = 0;
 		while (d3 == 0 || d4 == 0) {
-			L003f12(p1, p2);
+			SR_バトルフレーム前半処理_ゲージ表示あり(p1, p2);
 
 			p2->1324_思考完了フラグ = 0;
 			p1->1324_思考完了フラグ = 0;
@@ -6925,9 +6878,9 @@ L007342:
 
 			if (p1->0ac2_気集中 == 0 && p2->0ac2_気集中 == 0) {
 				if (p1->0a90_燃焼状態 > 0)
-					L019f60(p1);
+					SR_身体燃焼パレット_カウンタ更新・適用(p1);
 				if (p2->0a90_燃焼状態 > 0)
-					L019f60(p2);
+					SR_身体燃焼パレット_カウンタ更新・適用(p2);
 
 				if (p1->172e_無敵持続カウンタ > 0 && --p1->172e_無敵持続カウンタ <= 0)
 					p1->172e_無敵持続カウンタ = 0;
@@ -6942,7 +6895,7 @@ L007342:
 
 			p2->1756_セル非表示フラグ = 0;
 			p1->1756_セル非表示フラグ = 0;
-			L00cb2a(p1, p2);
+			SR_身体表示SP番号割り当て(p1, p2);
 			SR_キャラ動作関数実行(p1, OPT_サイクル２);
 			SR_キャラ動作関数実行(p2, OPT_サイクル２);
 
@@ -6981,7 +6934,7 @@ L007342:
 	if (d0 == 101) {
 		d3 = 0;
 		{
-			L003f12(p1, p2);
+			SR_バトルフレーム前半処理_ゲージ表示あり(p1, p2);
 
 			p2->1324_思考完了フラグ = 0;
 			p1->1324_思考完了フラグ = 0;
@@ -7013,9 +6966,9 @@ L007342:
 
 			if (p1->0ac2_気集中 == 0 && p2->0ac2_気集中 == 0) {
 				if (p1->0a90_燃焼状態 > 0)
-					L019f60(p1);
+					SR_身体燃焼パレット_カウンタ更新・適用(p1);
 				if (p2->0a90_燃焼状態 > 0)
-					L019f60(p2);
+					SR_身体燃焼パレット_カウンタ更新・適用(p2);
 
 				if (p1->172e_無敵持続カウンタ > 0 && --p1->172e_無敵持続カウンタ <= 0)
 					p1->172e_無敵持続カウンタ = 0;
@@ -7031,7 +6984,7 @@ L007342:
 			p1->1756_セル非表示フラグ = 0;
 			p2->1756_セル非表示フラグ = 0;
 
-			L00cb2a(p1, p2);
+			SR_身体表示SP番号割り当て(p1, p2);
 
 			SR_キャラ動作関数実行(p1, OPT_サイクル２);
 			SR_キャラ動作関数実行(p2, OPT_サイクル２);
@@ -7098,7 +7051,7 @@ L007342:
 			p2->1756_セル非表示フラグ = 0;
 			p1->1756_セル非表示フラグ = 0;
 
-			L00cb2a(p1, p2);
+			SR_身体表示SP番号割り当て(p1, p2);
 
 			SR_キャラ動作関数実行(p1, OPT_サイクル２);
 
@@ -7146,7 +7099,7 @@ L007342:
 			p2->1756_セル非表示フラグ = 0;
 			p1->1756_セル非表示フラグ = 0;
 
-			L00cb2a(p1, p2);
+			SR_身体表示SP番号割り当て(p1, p2);
 
 			SR_キャラ動作関数実行(p1, OPT_サイクル２);
 
@@ -7307,7 +7260,7 @@ L007a58:
 	move.l	#SYSCALL_012c_状態設定_しゃがみ,($012c,a0)
 	move.l	#SYSCALL_0130_Cmd実行_CPU動作,($0130,a0)
 	move.l	#SYSCALL_0134_演出設定_遅延ループ,($0134,a0)
-	move.l	#SYSCALL_0038_座標取得_相手距離,($0138,a0)
+	move.l	#SYSCALL_0138_座標取得_相手距離,($0138,a0)
 	move.l	#SYSCALL_013c_攻撃設定_SHOT反射,($013c,a0)
 	move.l	#SYSCALL_0140_XXXX,($0140,a0)
 	move.l	#SYSCALL_0144_MMP登録_動作関数,($0144,a0)
@@ -7629,7 +7582,7 @@ L0082ec:
 	clr.w	($0f22,a5)
 	clr.w	($01b4,a4)
 	clr.w	($01b4,a5)
-	clr.w	($01be,a4)
+	clr.w	($01be,a4)		;防御許可
 	clr.w	($01be,a5)
 	clr.w	($0ce4,a4)
 	clr.w	($0ce4,a5)
@@ -7672,7 +7625,7 @@ L0082ec:
 	move.w	d2,($01c2,a5)
 	move.w	d2,($0a92,a4)
 	move.w	d2,($0a92,a5)
-	move.w	d2,($1744,a4)
+	move.w	d2,($1744,a4)		;攻撃設定_SHOT反射回数
 	move.w	d2,($1744,a5)
 	move.l	d2,($1326,a4)
 	move.l	d2,($1326,a5)
@@ -7767,7 +7720,7 @@ L008504:
 	move.w	#$0058,($0030,a5)
 	move.w	#$0003,($0aa4,a4)
 	move.w	#$0003,($0aa4,a5)
-	move.w	#$001a,($001e,a5)
+	move.w	#$001a,($001e,a5)		;身体表示SP番号
 	move.w	#$005a,($001e,a4)
 	clr.w	($0a4c,a4)
 	clr.w	($0a4c,a5)
@@ -8944,561 +8897,235 @@ L009c42:
 	movem.l	(sp)+,d3-d4/a3
 	rts
 
-L009c70:
-	movem.l	a3-a4,-(sp)
-	move.w	(処理順制御フラグ),d0
-	eori.w	#$0001,d0
-	move.w	d0,(処理順制御フラグ)
-	bne	@f
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	bra	@@f
-@@:	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-@@:	jsr	(L003f12)
-	addq.w	#8,sp
-	lea.l	(WORK_1P_1324_思考完了),a0
-	lea.l	(WORK_2P_1324_思考完了),a1
-	clr.w	(a1)
-	clr.w	(a0)
-	clr.w	($041c,a1)				;p2 防御キャンセル
-	clr.w	($041c,a0)				;p1 防御キャンセル
-	tst.w	(-$115e,a0)				;p1 0x01c8
-	bgt	@f
-	tst.w	(-$115e,a1)				;p2 0x01c8
-	ble	@@f
-@@:	move.w	#$0001,(SFSYSINFO_0078_ヒットストップ)
-	subq.w	#1,(WORK_1P_01c6_硬直時間)
-	subq.w	#1,(WORK_2P_01c6_硬直時間)
-@@:	lea.l	(SFSYSINFO_0078_ヒットストップ),a4
-	tst.w	(a4)
-	bne	L00a052
-	pea.l	(WORK_1P_0000)
-	lea.l	(SR_ヒット情報クリア),a3
-	jsr	(a3)
-	addq.w	#4,sp
-	pea.l	(WORK_2P_0000)
-	jsr	(a3)
-	addq.w	#4,sp
-	clr.w	($0002,a4)
-	clr.w	(WORK_2P_キャラ振動フラグ)
-	clr.w	(WORK_1P_0f22_振動)
-	tst.w	(処理順制御フラグ)
-	bne	L009d7a
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	jsr	(SR_SHOT実行_CMD状態変化・表示)
-	addq.w	#8,sp
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	lea.l	(L00d2dc),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	jsr	(L010e5e)
-	addq.w	#8,sp
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	bra	L009dd4
-L009d7a:
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-	jsr	(SR_SHOT実行_CMD状態変化・表示)
-	addq.w	#8,sp
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-	lea.l	(L00d2dc),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-	jsr	(L010e5e)
-	addq.w	#8,sp
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-L009dd4:
-	jsr	(L015c8c)
-	addq.w	#8,sp
-	lea.l	(WORK_1P_0ac2_気集中),a0
-	tst.w	(a0)
-	bne	L009e40
-	tst.w	(WORK_2P_0ac2_気集中)
-	bne	L009e40
-	tst.w	(-$0032,a0)
-	ble	L009e02
-	pea.l	(WORK_1P_0000)
-	jsr	(L019f60)
-	addq.w	#4,sp
-L009e02:
-	tst.w	(L033c84)
-	ble	L009e18
-	pea.l	(WORK_2P_0000)
-	jsr	(L019f60)
-	addq.w	#4,sp
-L009e18:
-	lea.l	(L022b86),a0
-	tst.w	(a0)
-	ble	L009e2c
-	subq.w	#1,(a0)
-	tst.w	(a0)
-	bgt	L009e2c
-	clr.w	(-$156e,a0)
-L009e2c:
-	lea.l	(L034922),a0
-	tst.w	(a0)
-	ble	L009e40
-	subq.w	#1,(a0)
-	tst.w	(a0)
-	bgt	L009e40
-	clr.w	(-$156e,a0)
-L009e40:
-	lea.l	(WORK_1P_1756_セル非表示フラグ),a0
-	tst.w	(a0)
-	bne	L009e5e
-	movea.w	(-$0d6c,a0),a2					;表示セルID
-	move.l	a2,-(sp)
-	pea.l	(WORK_1P_0000)
-	jsr	(SYSCALL_0000_セル設定_表示)
-	addq.w	#8,sp
-L009e5e:
-	lea.l	(WORK_2P_1756_セル非表示フラグ),a0
-	tst.w	(a0)
-	bne	L009e7c
-	movea.w	(-$0d6c,a0),a2					;表示セル
-	move.l	a2,-(sp)
-	pea.l	(WORK_2P_0000)
-	jsr	(SYSCALL_0000_セル設定_表示)
-	addq.w	#8,sp
-L009e7c:
-	clr.w	(WORK_2P_1756_セル非表示フラグ)
-	clr.w	(WORK_1P_1756_セル非表示フラグ)
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	jsr	(L00cb2a)
-	addq.w	#8,sp
-	tst.w	(処理順制御フラグ)
-	bne	L009ec4
-	pea.l	($00cf)				;cf=OPT_サイクル２
-	pea.l	(WORK_1P_0000)
-	lea.l	(SR_キャラ動作関数実行),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	($00cf)
-	pea.l	(WORK_2P_0000)
-	bra	L009ee2
-L009ec4:
-	pea.l	($00cf)				;cf=OPT_サイクル２
-	pea.l	(WORK_2P_0000)
-	lea.l	(SR_キャラ動作関数実行),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	($00cf)
-	pea.l	(WORK_1P_0000)
-L009ee2:
-	jsr	(a3)
-	addq.w	#8,sp
-	tst.w	(WORK_1P_0ac2_気集中)
-	bne	L009f02
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	jsr	(L00c0be)
-	addq.w	#8,sp
-L009f02:
-	tst.w	(WORK_2P_0ac2_気集中)
-	bne	L009f1e
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-	jsr	(L00c0be)
-	addq.w	#8,sp
-L009f1e:
-	tst.w	(WORK_1P_0ac2_気集中)
-	bne	L009f34
-	pea.l	(WORK_1P_0000)
-	jsr	(SR_残像座標更新)
-	addq.w	#4,sp
-L009f34:
-	tst.w	(WORK_2P_0ac2_気集中)
-	bne	L009f4a
-	pea.l	(WORK_2P_0000)
-	jsr	(SR_残像座標更新)
-	addq.w	#4,sp
-L009f4a:
-	lea.l	(WORK_1P_0008_Y座標),a0
-	cmpi.w	#$006f,(a0)
-	ble	L009f66
-	clr.w	($174c,a0)
-	tst.w	($0f12,a0)
-	bne	L009f6e
-	move.w	#$0070,(a0)
-	bra	L009f6e
-L009f66:
-	move.w	#$0001,(WORK_1P_1754_xxxx)
-L009f6e:
-	lea.l	(WORK_2P_0008_Y座標),a0
-	cmpi.w	#$006f,(a0)
-	ble	L009f8a
-	clr.w	($174c,a0)
-	tst.w	($0f12,a0)
-	bne	L009f92
-	move.w	#$0070,(a0)
-	bra	L009f92
-L009f8a:
-	move.w	#$0001,(WORK_2P_1754_xxxx)
-L009f92:
-	jsr	(L0041fa)
-	tst.w	(処理順制御フラグ)
-	bne	L009fe0
-	lea.l	(WORK_1P_0a3c_攻撃判定有無),a0
-	tst.w	(a0)
-	ble	L009fc4
-	move.l	($0002,a0),-(sp)
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	jsr	(L00e688)						;攻撃ヒットチェック？
-	lea.l	($000c,sp),sp
-L009fc4:
-	lea.l	(L033c30),a0
-	tst.w	(a0)
-	ble	L00a028
-	move.l	($0002,a0),-(sp)
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-	bra	L00a01e
-L009fe0:
-	lea.l	(L033c30),a0
-	tst.w	(a0)
-	ble	L00a004
-	move.l	($0002,a0),-(sp)
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-	jsr	(L00e688)						;攻撃ヒットチェック？
-	lea.l	($000c,sp),sp
-L00a004:
-	lea.l	(WORK_1P_0a3c_攻撃判定有無),a0
-	tst.w	(a0)
-	ble	L00a028
-	move.l	($0002,a0),-(sp)
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-L00a01e:
-	jsr	(L00e688)
-	lea.l	($000c,sp),sp
-L00a028:
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	lea.l	(L0040d0),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)
-	jsr	(a3)
-	addq.w	#8,sp
-	bra	L00a3e6
-L00a052:
-	tst.w	(WORK_1P_01cc_敗北状態)
-	bne	L00a064
-	tst.w	(WORK_2P_01cc_敗北状態)
-	beq	L00a20a
-L00a064:
-	lea.l	(SFSYSINFO_0078_ヒットストップ),a0
-	cmpi.w	#$0001,(a0)
-	bgt	L00a0c2
-	clr.w	(a0)
-	move.w	#$ffff,(-$003e,a0)
-	jsr	(SR_ステージパレット反映)
-	tst.w	(WORK_1P_001c_xxxx)
-	beq	L00a098
-	pea.l	($00fc)				;fc=VCT_悲鳴処理
-	pea.l	(WORK_1P_0000)
-	jsr	(SR_キャラ動作関数実行)
-	addq.w	#8,sp
-L00a098:
-	tst.w	(L033210)
-	beq	L00a0b2
-	pea.l	($00fc)				;fc=VCT_悲鳴処理
-	pea.l	(WORK_2P_0000)
-	jsr	(SR_キャラ動作関数実行)
-	addq.w	#8,sp
-L00a0b2:
-	clr.w	(L033210)
-	clr.w	(WORK_1P_001c_xxxx)
-	bra	L00a20a
-L00a0c2:
-	lea.l	(SFSYSINFO_003a_xxxx),a0
-	tst.w	(a0)
-	blt	L00a20a
-	move.w	#$0001,(a0)
-	tst.w	(WORK_1P_002e_残り体力)
-	bge	L00a0e2
-	tst.w	(L0337d2)
-	bne	L00a0f2
-L00a0e2:
-	tst.w	(L033222)
-	bge	L00a14e
-	tst.w	(L021a36)
-	beq	L00a14e
-L00a0f2:
-	tst.w	(SFSYSINFO_000c_ゲームスピード)
-	beq	L00a102
-	jsr	(SR_タイマーD割込み処理終了待ち)
-	bra	L00a108
-L00a102:
-	jsr	(SR_最終ラスター割込み終了待ち)
-L00a108:
-	pea.l	($0002)
-	pea.l	($001e)
-	pea.l	($001f)
-	pea.l	($001b)
-	pea.l	($0080)
-	pea.l	($0000)
-	lea.l	(L01b8d2),a3
-	jsr	(a3)
-	lea.l	($0018,sp),sp
-	pea.l	($0000)
-	lea.l	(SR_グラフィックパレット反映),a4
-	jsr	(a4)
-	addq.w	#4,sp
-	pea.l	($0002)
-	pea.l	($001e)
-	pea.l	($001f)
-	pea.l	($001b)
-	bra	L00a1f4
-L00a14e:
-	tst.w	(WORK_1P_002e_残り体力)
-	bge	L00a15e
-	tst.w	(L033220)
-	bgt	L00a16e
-L00a15e:
-	tst.w	(L033222)
-	bge	L00a1b2
-	tst.w	(L021484)
-	ble	L00a1b2
-L00a16e:
-	pea.l	($0002)
-	pea.l	($001f)
-	pea.l	($001e)
-	pea.l	($001c)
-	pea.l	($0080)
-	pea.l	($0000)
-	lea.l	(L01b8d2),a3
-	jsr	(a3)
-	lea.l	($0018,sp),sp
-	pea.l	($0000)
-	lea.l	(SR_グラフィックパレット反映),a4
-	jsr	(a4)
-	addq.w	#4,sp
-	pea.l	($0002)
-	pea.l	($001f)
-	pea.l	($001e)
-	pea.l	($001c)
-	bra	L00a1f4
-L00a1b2:
-	pea.l	($0002)
-	pea.l	($001a)
-	pea.l	($001e)
-	pea.l	($001f)
-	pea.l	($0080)
-	pea.l	($0000)
-	lea.l	(L01b8d2),a3
-	jsr	(a3)
-	lea.l	($0018,sp),sp
-	pea.l	($0000)
-	lea.l	(SR_グラフィックパレット反映),a4
-	jsr	(a4)
-	addq.w	#4,sp
-	pea.l	($0002)
-	pea.l	($001a)
-	pea.l	($001e)
-	pea.l	($001f)
-L00a1f4:
-	pea.l	($0080)
-	pea.l	($0080)
-	jsr	(a3)
-	lea.l	($0018,sp),sp
-	pea.l	($0080)
-	jsr	(a4)
-	addq.w	#4,sp							;敗北時処理ここまで
-L00a20a:
-	tst.w	(処理順制御フラグ)
-	bne	L00a25e
-	pea.l	(WORK_2P_0000)					;▼1p優先処理ここから
-	pea.l	(WORK_1P_0000)
-	jsr	(SR_SHOT実行_CMD状態変化・表示)
-	addq.w	#8,sp
-	movea.w	(WORK_1P_09ea_セル番号),a2
-	move.l	a2,-(sp)
-	pea.l	(WORK_1P_0000)
-	lea.l	(SYSCALL_0000_セル設定_表示),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	movea.w	(WORK_2P_09ea_セル番号),a2
-	move.l	a2,-(sp)
-	pea.l	(WORK_2P_0000)
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	bra	L00a2a8								;▲1p優先処理ここまで
-L00a25e:
-	pea.l	(WORK_1P_0000)					;▼2p優先処理ここから
-	pea.l	(WORK_2P_0000)
-	jsr	(SR_SHOT実行_CMD状態変化・表示)
-	addq.w	#8,sp
-	movea.w	(WORK_2P_09ea_セル番号),a2
-	move.l	a2,-(sp)
-	pea.l	(WORK_2P_0000)
-	lea.l	(SYSCALL_0000_セル設定_表示),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	movea.w	(WORK_1P_09ea_セル番号),a2
-	move.l	a2,-(sp)
-	pea.l	(WORK_1P_0000)
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	(WORK_1P_0000)
-	pea.l	(WORK_2P_0000)					;▲2p優先処理ここまで
-L00a2a8:
-	jsr	(L010e5e)
-	addq.w	#8,sp
-	lea.l	(WORK_1P_0ac2_気集中),a0
-	tst.w	(a0)
-	bne	L00a30e
-	tst.w	(WORK_2P_0ac2_気集中)
-	bne	L00a30e
-	tst.w	(-$0032,a0)						;1p燃焼状態
-	ble	L00a2d6
-	pea.l	(WORK_1P_0000)
-	jsr	(L019f60)
-	addq.w	#4,sp
-L00a2d6:
-	tst.w	(L033c84)
-	ble	L00a2ec
-	pea.l	(WORK_2P_0000)
-	jsr	(L019f60)
-	addq.w	#4,sp
-L00a2ec:
-	pea.l	($00cd)				;cd=OPT_衝撃硬直
-	pea.l	(WORK_1P_0000)
-	lea.l	(SR_キャラ動作関数実行),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	($00cd)				;cd=OPT_衝撃硬直
-	pea.l	(WORK_2P_0000)
-	jsr	(a3)
-	addq.w	#8,sp
-L00a30e:
-	lea.l	(WORK_1P_1756_セル非表示フラグ),a0
-	tst.w	(a0)
-	bne	L00a32c
-	movea.w	(-$0d6c,a0),a2					;1p表示セルID
-	move.l	a2,-(sp)
-	pea.l	(WORK_1P_0000)
-	jsr	(SYSCALL_0000_セル設定_表示)
-	addq.w	#8,sp
-L00a32c:
-	lea.l	(WORK_2P_1756_セル非表示フラグ),a0
-	tst.w	(a0)
-	bne	L00a34a
-	movea.w	(-$0d6c,a0),a2
-	move.l	a2,-(sp)
-	pea.l	(WORK_2P_0000)
-	jsr	(SYSCALL_0000_セル設定_表示)
-	addq.w	#8,sp
-L00a34a:
-	clr.w	(WORK_2P_1756_セル非表示フラグ)
-	clr.w	(WORK_1P_1756_セル非表示フラグ)
-	pea.l	(WORK_2P_0000)
-	pea.l	(WORK_1P_0000)
-	jsr	(L00cb2a)
-	addq.w	#8,sp
-	tst.w	(処理順制御フラグ)
-	bne	L00a392
-	pea.l	($00cf)				;cf=OPT_サイクル２
-	pea.l	(WORK_1P_0000)
-	lea.l	(SR_キャラ動作関数実行),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	($00cf)				;cf=OPT_サイクル２
-	pea.l	(WORK_2P_0000)
-	bra	L00a3b0
-L00a392:
-	pea.l	($00cf)				;cf=OPT_サイクル２
-	pea.l	(WORK_2P_0000)
-	lea.l	(SR_キャラ動作関数実行),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	($00cf)				;cf=OPT_サイクル２
-	pea.l	(WORK_1P_0000)
-L00a3b0:
-	jsr	(a3)
-	addq.w	#8,sp
-	tst.w	(WORK_1P_0ac2_気集中)
-	bne	L00a3ca
-	pea.l	(WORK_1P_0000)
-	jsr	(SR_残像座標更新)
-	addq.w	#4,sp
-L00a3ca:
-	tst.w	(WORK_2P_0ac2_気集中)
-	bne	L00a3e0
-	pea.l	(WORK_2P_0000)
-	jsr	(SR_残像座標更新)
-	addq.w	#4,sp
-L00a3e0:
-	jsr	(L0041fa)
-L00a3e6:
-	tst.w	(WORK_1P_0ac2_気集中)
-	bne	L00a462
-	tst.w	(WORK_2P_0ac2_気集中)
-	bne	L00a462
-	lea.l	(SFSYSINFO_0078_ヒットストップ),a0
-	tst.w	(a0)
-	ble	L00a402
-	subq.w	#1,(a0)
-L00a402:
-	lea.l	(SFSYSINFO_001c_気絶量減少カウンタ),a0
-	addq.w	#1,(a0)
-	cmpi.w	#$000d,(a0)
-	ble	L00a42a
-	clr.w	(a0)
-	lea.l	(WORK_1P_0032_気絶量),a0
-	tst.w	(a0)
-	ble	L00a41e
-	subq.w	#1,(a0)
-L00a41e:
-	lea.l	(WORK_2P_0032_気絶量),a0
-	tst.w	(a0)
-	ble	L00a42a
-	subq.w	#1,(a0)
-L00a42a:
-	lea.l	(WORK_1P_0a98),a0
-	tst.w	(a0)
-	ble	L00a446
-	subq.w	#1,(a0)
-	bne	L00a446
-	pea.l	(WORK_1P_0000)
-	jsr	(SR_コンボ数表示クリア)
-	addq.w	#4,sp
-L00a446:
-	lea.l	(WORK_2P_0a98),a0
-	tst.w	(a0)
-	ble	L00a462
-	subq.w	#1,(a0)
-	bne	L00a462
-	pea.l	(WORK_2P_0000)
-	jsr	(SR_コンボ数表示クリア)
-	addq.w	#4,sp
-L00a462:
-	movem.l	(sp)+,a3-a4
-	rts
+L009c70()
+{
+	処理順制御フラグ ^= 1;
+	if (処理順制御フラグ == 0)
+		SR_バトルフレーム前半処理_ゲージ表示あり(WORK_1P_0000, WORK_2P_0000);
+	else
+		SR_バトルフレーム前半処理_ゲージ表示あり(WORK_2P_0000, WORK_1P_0000);
+
+	WORK_1P_1324_思考完了 = 0;
+	WORK_2P_1324_思考完了 = 0;
+	WORK_1P_1740_防御キャンセル可能フラグ = 0;
+	WORK_2P_1740_防御キャンセル可能フラグ = 0;
+	if (WORK_1P_01c8_xxxx > 0 || WORK_2P_01c8_xxxx > 0) {
+		SFSYSINFO_0078_ヒットストップ = 1;
+		WORK_1P_01c6_硬直時間--;
+		WORK_2P_01c6_硬直時間--;
+	}
+
+	if (SFSYSINFO_0078_ヒットストップ == 0) {
+		SR_ヒット情報クリア(WORK_1P_0000);
+		SR_ヒット情報クリア(WORK_2P_0000);
+
+		SFSYSINFO_007a_セル前面表示フラグ = 0;
+		WORK_1P_0f22_キャラ振動フラグ = 0;
+		WORK_2P_0f22_キャラ振動フラグ = 0;
+
+		if (処理順制御フラグ == 0) {
+			SR_SHOT実行_CMD状態変化・表示(WORK_1P_0000, WORK_2P_0000);
+			L00d2dc(WORK_1P_0000, WORK_2P_0000);
+			L00d2dc(WORK_2P_0000, WORK_1P_0000);
+			SR_投げ成立チェック(WORK_1P_0000, WORK_2P_0000);
+			L015c8c(WORK_1P_0000, WORK_2P_0000);
+		} else {
+			SR_SHOT実行_CMD状態変化・表示(WORK_2P_0000, WORK_1P_0000);
+			L00d2dc(WORK_2P_0000, WORK_1P_0000);
+			L00d2dc(WORK_1P_0000, WORK_2P_0000);
+			SR_投げ成立チェック(WORK_2P_0000, WORK_1P_0000);
+			L015c8c(WORK_2P_0000, WORK_1P_0000);
+		}
+
+		if (WORK_1P_0ac2_気集中 == 0 && WORK_2P_0ac2_気集中 == 0) {
+			if (WORK_1P_0a90_燃焼状態 > 0)
+				SR_身体燃焼パレット_カウンタ更新・適用(WORK_1P_0000);
+			if (WORK_2P_0a90_燃焼状態 > 0)
+				SR_身体燃焼パレット_カウンタ更新・適用(WORK_2P_0000);
+				
+			if (WORK_1P_172e_無敵持続カウンタ > 0)
+				if (--WORK_1P_172e_無敵持続カウンタ <= 0)
+					WORK_1P_01c0_無敵状態 = IVC_通常;
+			if (WORK_2P_172e_無敵持続カウンタ > 0)
+				if (--WORK_2P_172e_無敵持続カウンタ <= 0)
+					WORK_2P_01c0_無敵状態 = IVC_通常;
+		}
+
+		if (WORK_1P_1756_セル非表示フラグ == 0)
+			SYSCALL_0000_セル設定_表示(WORK_1P_0000, WORK_1P_09ea_表示セルID);
+		if (WORK_2P_1756_セル非表示フラグ == 0)
+			SYSCALL_0000_セル設定_表示(WORK_2P_0000, WORK_2P_09ea_表示セルID);
+
+		WORK_2P_1756_セル非表示フラグ = 0;
+		WORK_1P_1756_セル非表示フラグ = 0;
+		SR_身体表示SP番号割り当て(WORK_1P_0000, WORK_2P_0000);
+
+		if (処理順制御フラグ == 0) {
+			SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
+			SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
+		} else {
+			SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
+			SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
+		}
+
+		if (WORK_1P_0ac2_気集中 == 0)
+			L00c0be(WORK_1P_0000, WORK_2P_0000);
+		if (WORK_2P_0ac2_気集中 == 0)
+			L00c0be(WORK_2P_0000, WORK_1P_0000);
+
+		if (WORK_1P_0ac2_気集中 == 0)
+			SR_残像座標更新(WORK_1P_0000);
+		if (WORK_2P_0ac2_気集中 == 0)
+			SR_残像座標更新(WORK_2P_0000);
+
+		if (WORK_1P_0008_Y座標 <= BASE_LINE-1) {
+			WORK_1P_1754_xxxx = 1;
+		} else {
+			WORK_1P_1754_xxxx = 0;
+			if (WORK_1P_0f1a_シューティングモード == 0)
+				WORK_1P_0008_Y座標 = BASE_LINE;
+		}
+
+		if (WORK_2P_0008_Y座標 <= BASE_LINE-1) {
+			WORK_2P_1754_xxxx = 1;
+		} else {
+			WORK_2P_1754_xxxx = 0;
+			if (WORK_2P_0f1a_シューティングモード == 0)
+				WORK_2P_0008_Y座標 = BASE_LINE;
+		}
+
+		L0041fa();
+		
+		if (処理順制御フラグ == 0) {
+			if (WORK_1P_0a3c_攻撃判定有無 > 0)
+				SR_攻撃ヒット判定・体力減少処理(WORK_1P_0000, WORK_2P_0000, WORK_1P_0a3e_ヒット情報);
+			if (WORK_2P_0a3c_攻撃判定有無 > 0)
+				SR_攻撃ヒット判定・体力減少処理(WORK_2P_0000, WORK_1P_0000, WORK_2P_0a3e_ヒット情報);
+		} else {
+			if (WORK_2P_0a3c_攻撃判定有無 > 0)
+				SR_攻撃ヒット判定・体力減少処理(WORK_2P_0000, WORK_1P_0000, WORK_2P_0a3e_ヒット情報);
+			if (WORK_1P_0a3c_攻撃判定有無 > 0)
+				SR_攻撃ヒット判定・体力減少処理(WORK_1P_0000, WORK_2P_0000, WORK_1P_0a3e_ヒット情報);
+		}
+
+		L0040d0(WORK_1P_0000, WORK_2P_0000);
+		L0040d0(WORK_2P_0000, WORK_1P_0000);
+	} else {
+		if (WORK_1P_01cc_敗北状態 || (WORK_2P_01cc_敗北状態)) {
+			if (SFSYSINFO_0078_ヒットストップ <= 1) {
+				SFSYSINFO_0078_ヒットストップ = 0;
+				SFSYSINFO_003a_xxxx = -1;
+				
+				SR_ステージパレット反映();
+
+				if (WORK_1P_0001c_xxxx)
+					SR_キャラ動作関数実行(WORK_1P_0000, VCT_悲鳴処理);
+				if (WORK_2P_0001c_xxxx)
+					SR_キャラ動作関数実行(WORK_2P_0000, VCT_悲鳴処理);
+
+				WORK_1P_001c_xxxx = 0;
+				WORK_2P_001c_xxxx = 0;
+				goto L00a20a;
+			} else {
+				if (SFSYSINFO_003a_xxxx >= 0) {
+					SFSYSINFO_003a_xxxx = 1;
+
+					if ((WORK_1P_002e_残り体力 < 0 && WORK_2P_05de_超技実行中フラグ)
+					|| (WORK_2P_002e_残り体力 < 0 && WORK_1P_05de_超技実行中フラグ)) {
+						if (SFSYSINFO_000c_ゲームスピード)
+							SR_タイマーD割込み処理終了待ち();
+						else
+							SR_最終ラスター割込み終了待ち();
+
+						L01b8d2(0, 128, 27, 31, 30, 2);
+						SR_グラフィックパレット反映(0);
+						L01b8d2(128, 128, 27, 31, 30, 2);
+						SR_グラフィックパレット反映(128);
+					} else if ((WORK_1P_002e_残り体力 < 0 && WORK_2P_002c_勝ち数 > 0)
+					|| (WORK_2P_002e_残り体力 < 0 && WORK_1P_002c_勝ち数 > 0)) {
+						L01b8d2(0, 128, 28, 30, 31, 2);
+						SR_グラフィックパレット反映(0);
+						L01b8d2(128, 128, 28, 30, 31, 2);
+						SR_グラフィックパレット反映(128);
+					} else {
+						L01b8d2(0, 128, 31, 30, 26, 2);
+						SR_グラフィックパレット反映(0);
+						L01b8d2(128, 128, 31, 30, 26, 2);
+						SR_グラフィックパレット反映(128);
+					}
+				}
+			}
+		}
+
+		if (処理順制御フラグ == 0) {
+			SR_SHOT実行_CMD状態変化・表示(WORK_1P_0000, WORK_2P_0000);
+			SYSCALL_0000_セル設定_表示(WORK_1P_0000, WORK_1P_09ea_セル番号);
+			SYSCALL_0000_セル設定_表示(WORK_2P_0000, WORK_2P_09ea_セル番号);
+			SR_投げ成立チェック(WORK_1P_0000, WORK_2P_0000);
+		} else {
+			SR_SHOT実行_CMD状態変化・表示(WORK_2P_0000, WORK_1P_0000);
+			SYSCALL_0000_セル設定_表示(WORK_2P_0000, WORK_2P_09ea_セル番号);
+			SYSCALL_0000_セル設定_表示(WORK_1P_0000, WORK_1P_09ea_セル番号);
+			SR_投げ成立チェック(WORK_2P_0000, WORK_1P_0000);
+		}
+
+		if (WORK_1P_0ac2_気集中 == 0 && WORK_2P_0ac2_気集中 == 0) {
+			if (WORK_1P_0a90_燃焼状態 > 0)
+				SR_身体燃焼パレット_カウンタ更新・適用(WORK_1P_0000);
+			if (WORK_2P_0a90_燃焼状態 > 0)
+				SR_身体燃焼パレット_カウンタ更新・適用(WORK_2P_0000);
+
+			SR_キャラ動作関数実行(WORK_1P_0000, OPT_衝撃硬直);
+			SR_キャラ動作関数実行(WORK_2P_0000, OPT_衝撃硬直);
+		}
+
+		if (WORK_1P_1756_セル非表示フラグ == 0)
+			SYSCALL_0000_セル設定_表示(WORK_1P_0000, WORK_1P_09ea_表示セルID);
+		if (WORK_2P_1756_セル非表示フラグ == 0)
+			SYSCALL_0000_セル設定_表示(WORK_2P_0000, WORK_2P_09ea_表示セルID);
+
+		WORK_1P_1756_セル非表示フラグ = 0;
+		WORK_2P_1756_セル非表示フラグ = 0;
+
+		SR_身体表示SP番号割り当て(WORK_1P_0000, WORK_2P_0000);
+
+		if (処理順制御フラグ == 0) {
+			SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
+			SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
+		} else {
+			SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
+			SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
+		}
+
+		if (WORK_1P_0ac2_気集中 == 0)
+			SR_残像座標更新(WORK_1P_0000);
+		if (WORK_2P_0ac2_気集中 == 0)
+			SR_残像座標更新(WORK_2P_0000);
+
+		L0041fa();
+	}
+
+	if (WORK_1P_0ac2_気集中 == 0 && WORK_2P_0ac2_気集中 == 0) {
+		if (SFSYSINFO_0078_ヒットストップ > 0)
+			--SFSYSINFO_0078_ヒットストップ;
+		}
+
+		if (++SFSYSINFO_001c_気絶量減少カウンタ > 13) {
+			SFSYSINFO_001c_気絶量減少カウンタ = 0;
+			if (WORK_1P_0032_気絶量 > 0)
+				--WORK_1P_0032_気絶量;
+			if (WORK_2P_0032_気絶量 > 0)
+				--WORK_2P_0032_気絶量;
+		}
+
+		if (WORK_1P_0a98_xxxx > 0)
+			if (--WORK_1P_0a98_xxxx == 0)
+				SR_コンボ数表示クリア(WORK_1P_0000);
+		if (WORK_2P_0a98_xxxx > 0)
+			if (--WORK_2P_0a98_xxxx == 0)
+				SR_コンボ数表示クリア(WORK_2P_0000);
+	}
+}
 
 L00a468:
 	move.l	a3,-(sp)
@@ -10770,7 +10397,7 @@ L00ba56:
 	tst.w	(-$0492,a4)
 	ble	L00bb12
 	pea.l	(WORK_1P_0000)
-	jsr	(L019f60)
+	jsr	(SR_身体燃焼パレット_カウンタ更新・適用)
 	addq.w	#4,sp
 L00bb12:
 	lea.l	(L022b86),a0
@@ -10812,7 +10439,7 @@ L00bb76:
 	clr.w	(a3)
 	pea.l	(WORK_2P_0000)
 	pea.l	(WORK_1P_0000)
-	jsr	(L00cb2a)
+	jsr	(SR_身体表示SP番号割り当て)
 	addq.w	#8,sp
 	pea.l	($00cf)				;cf=OPT_サイクル２
 	pea.l	(WORK_1P_0000)
@@ -10878,7 +10505,7 @@ L00bc64:
 	move.l	($0002,a0),-(sp)
 	pea.l	(WORK_2P_0000)
 	pea.l	(WORK_1P_0000)
-	jsr	(L00e688)
+	jsr	(SR_攻撃ヒット判定・体力減少処理)
 	lea.l	($000c,sp),sp
 L00bc8e:
 	lea.l	(L033c30),a0
@@ -10887,7 +10514,7 @@ L00bc8e:
 	move.l	($0002,a0),-(sp)
 	pea.l	(WORK_1P_0000)
 	pea.l	(WORK_2P_0000)
-	jsr	(L00e688)
+	jsr	(SR_攻撃ヒット判定・体力減少処理)
 	lea.l	($000c,sp),sp
 L00bcb2:
 	pea.l	(WORK_2P_0000)
@@ -10929,7 +10556,7 @@ L00bcdc:
 	tst.w	($00a6,a4)
 	ble	L00bd52
 	pea.l	(WORK_1P_0000)
-	jsr	(L019f60)
+	jsr	(SR_身体燃焼パレット_カウンタ更新・適用)
 	addq.w	#4,sp
 L00bd52:
 	pea.l	($00cd)				;cd=OPT_衝撃硬直
@@ -10965,7 +10592,7 @@ L00bdb0:
 	clr.w	(a3)
 	pea.l	(WORK_2P_0000)
 	pea.l	(WORK_1P_0000)
-	jsr	(L00cb2a)
+	jsr	(SR_身体表示SP番号割り当て)
 	addq.w	#8,sp
 	pea.l	($00cf)				;cf=OPT_サイクル２
 	pea.l	(WORK_1P_0000)
@@ -11108,7 +10735,7 @@ L00bf5e:
 L00bf9a:
 	move.l	d3,-(sp)
 	move.l	a3,-(sp)
-	jsr	(L003f12)
+	jsr	(SR_バトルフレーム前半処理_ゲージ表示あり)
 	addq.w	#8,sp
 	move.l	d3,-(sp)
 	move.l	a3,-(sp)
@@ -11138,7 +10765,7 @@ L00bfec:
 	addq.w	#8,sp
 	move.l	d3,-(sp)
 	move.l	a3,-(sp)
-	jsr	(L00cb2a)
+	jsr	(SR_身体表示SP番号割り当て)
 	addq.w	#8,sp
 	jsr	(L0041fa)
 L00c00a:
@@ -11211,107 +10838,49 @@ SYSCALL_00c0_状態設定_永続無敵:
 	move.w	($000a,sp),($01c0,a0)		;無敵状態
 	rts
 
-L00c0be:
-	movem.l	d3-d7/a3-a4,-(sp)
-	movea.l	($0020,sp),a4
-	movea.l	($0024,sp),a3
-	cmpi.w	#$0100,($01c0,a4)			;無敵状態
-	beq	L00c1d0
-	cmpi.w	#$0100,($01c0,a3)			;無敵状態
-	beq	L00c1d0
-	tst.w	($01cc,a4)
-	bne	L00c1d0
-	tst.w	($01cc,a3)
-	bne	L00c1d0
-	cmpi.w	#$0001,($01b6,a3)
-	bne	L00c108
-	move.w	($0a0c,a3),d7
-	move.w	($0a0e,a3),d6
-	move.w	($0a10,a3),d2
-	move.w	($0a12,a3),d0
-	bra	L00c118
-L00c108:
-	move.w	($0a14,a3),d7
-	move.w	($0a16,a3),d6
-	move.w	($0a18,a3),d2
-	move.w	($0a1a,a3),d0
-L00c118:
-	cmpi.w	#$0001,($01b6,a4)
-	bne	L00c172
-	move.w	($0a0c,a4),d5
-	move.w	($0a0e,a4),d4
-	move.w	($0a10,a4),d3
-	move.w	($0a12,a4),d1
-	ext.l	d0
-	move.l	d0,-(sp)
-	ext.l	d2
-	move.l	d2,-(sp)
-	movea.w	d6,a0
-	move.l	a0,-(sp)
-	movea.w	d7,a0
-	move.l	a0,-(sp)
-	ext.l	d1
-	move.l	d1,-(sp)
-	ext.l	d3
-	move.l	d3,-(sp)
-	movea.w	d4,a0
-	move.l	a0,-(sp)
-	movea.w	d5,a0
-	move.l	a0,-(sp)
-	jsr	(SR_矩形接触判定)
-	lea.l	($0020,sp),sp
-	tst.w	d0
-	beq	L00c1d0
-	cmp.w	d5,d7
-	ble	L00c168
-	pea.l	(-$0001)
-	bra	L00c1c2
-L00c168:
-	cmp.w	d4,d6
-	blt	L00c1be
-	pea.l	(-$0001)
-	bra	L00c1c2
-L00c172:
-	move.w	($0a14,a4),d5
-	move.w	($0a16,a4),d4
-	move.w	($0a18,a4),d3
-	move.w	($0a1a,a4),d1
-	ext.l	d0
-	move.l	d0,-(sp)
-	ext.l	d2
-	move.l	d2,-(sp)
-	movea.w	d6,a0
-	move.l	a0,-(sp)
-	movea.w	d7,a0
-	move.l	a0,-(sp)
-	ext.l	d1
-	move.l	d1,-(sp)
-	ext.l	d3
-	move.l	d3,-(sp)
-	movea.w	d4,a0
-	move.l	a0,-(sp)
-	movea.w	d5,a0
-	move.l	a0,-(sp)
-	jsr	(SR_矩形接触判定)
-	lea.l	($0020,sp),sp
-	tst.w	d0
-	beq	L00c1d0
-	cmp.w	d4,d6
-	blt	L00c1be
-	cmp.w	d5,d7
-	ble	L00c1be
-	pea.l	(-$0001)
-	bra	L00c1c2
-L00c1be:
-	pea.l	($0001)
-L00c1c2:
-	move.l	a3,-(sp)
-	move.l	a4,-(sp)
-	jsr	(L00c410)
-	lea.l	($000c,sp),sp
-L00c1d0:
-	movem.l	(sp)+,d3-d7/a3-a4
-	rts
+L00c0be(p1, p2)
+{
+	if (p1->01c0_無敵状態 == IVC_ゾンビ || p2->01c0_無敵状態 == IVC_ゾンビ || p1->01cc_敗北状態 || p2->01cc_敗北状態)
+		return;
+
+	if (p2->01b6_表示方向 == DRCT_右) {
+		d7 = p2->0a0c_右向き時存在矩形X1;
+		d6 = p2->0a0e_右向き時存在矩形X2;
+		d2 = p2->0a10_右向き時存在矩形Y1;
+		d0 = p2->0a12_右向き時存在矩形Y2;
+	} else {
+		d7 = p2->0a14_左向き時存在矩形X1;
+		d6 = p2->0a16_左向き時存在矩形X2;
+		d2 = p2->0a18_左向き時存在矩形Y1;
+		d0 = p2->0a1a_左向き時存在矩形Y2;
+	}
+
+	if (p1->01b6_表示方向 == DRCT_右) {
+		d5 = p1->0a0c_右向き時存在矩形X1;
+		d4 = p1->0a0e_右向き時存在矩形X2;
+		d3 = p1->0a10_右向き時存在矩形Y1;
+		d1 = p1->0a12_右向き時存在矩形Y2;
+		if (SR_矩形接触判定(d5, d4, d3, d1, d7, d6, d2, d0) == 0)
+			return;
+		if (d7 > d5 || d6 >= d4) {
+			L00c410(p1, p2, -1);
+		} else {
+			L00c410(p1, p2, 1);
+		}
+	} else {
+		d5 = p1->0a14_左向き時存在矩形X1;
+		d4 = p1->0a16_左向き時存在矩形X2;
+		d3 = p1->0a18_左向き時存在矩形Y1;
+		d1 = p1->0a1a_左向き時存在矩形Y2;
+		if (SR_矩形接触判定(d5, d4, d3, d1, d7, d6, d2, d0) == 0)
+			return;
+		if (d7 > d5 || d6 >= d4) {
+			L00c410(p1, p2, -1);
+		} else {
+			L00c410(p1, p2, 1);
+		}
+	}
+}
 
 SR_状態設定_相対方向:
 	movea.l	($0004,sp),a2				;a2=自分ハンドラ
@@ -12059,38 +11628,39 @@ L00cb26:
 	move.l	a0,d0
 	rts
 
-L00cb2a:
-	movea.l	($0004,sp),a1
-	movea.l	($0008,sp),a0
-	tst.w	(SFSYSINFO_007a_セル前面表示フラグ)
-	bgt	L00cb6a
-	bge	L00cb4a
-	move.w	#$005a,($001e,a1)			;5a=90
-	move.w	#$001a,($001e,a0)			;1a=26
-	bra	L00cb8c
-L00cb4a:
-	cmpi.w	#$0027,($09e2,a1)		;ユーザー定義攻撃動作ID最大値
-	bgt	L00cb62
-	cmpi.w	#$0027,($09e2,a0)
-	bgt	L00cb62
-	tst.w	($05de,a0)				;超技実行中フラグ
-	bne	L00cb80
-	bra	L00cb6a
-L00cb62:
-	cmpi.w	#$0027,($09e2,a1)
-	bgt	L00cb78
-L00cb6a:
-	move.w	#$001a,($001e,a1)
-	move.w	#$005a,($001e,a0)
-	bra	L00cb8c
-L00cb78:
-	cmpi.w	#$0027,($09e2,a0)
-	bgt	L00cb8c
-L00cb80:
-	move.w	#$001a,($001e,a0)
-	move.w	#$005a,($001e,a1)
-L00cb8c:
-	rts
+SR_身体表示SP番号割り当て(p1, p2)
+{
+	if (SFSYSINFO_007a_セル前面表示フラグ < 0) {
+		p1->001e_身体表示SP番号 = 90;
+		p2->001e_身体表示SP番号 = 26;
+		return;
+	}
+
+	if (SFSYSINFO_007a_セル前面表示フラグ > 0) {
+		p1->001e_身体表示SP番号 = 26;
+		p2->001e_身体表示SP番号 = 90;
+		return;
+	}
+
+	if (p1->09e2_動作ID <= 39 && p2->09e2_動作ID <= 39) {
+		if (p2->05de_超技実行中フラグ) {
+			p2->001e_身体表示SP番号 = 26;
+			p1->001e_身体表示SP番号 = 90;
+		} else {
+			p1->001e_身体表示SP番号 = 26;
+			p2->001e_身体表示SP番号 = 90;
+		}
+		return;
+	}
+
+	if (p1->09e2_動作ID <= 39) {
+		p1->001e_身体表示SP番号 = 26;
+		p2->001e_身体表示SP番号 = 90;
+	} else if (p2->09e2_動作ID <= 39){
+		p2->001e_身体表示SP番号 = 26;
+		p1->001e_身体表示SP番号 = 90;
+	}
+}
 
 SR_矩形接触判定:
 	movem.l	d3-d7,-(sp)
@@ -12301,7 +11871,7 @@ SR_デバッグパラメータ表示()
 	XCLIB_sprintf(a6_mi0042, "TRG INP %5d %5d", WORK_1P_0ad4_トリガー直接状態１, WORK_2P_0ad4_トリガー直接状態１);
 	SR_BG文字列描画(11, 22, a6_mi0042, 0x0c00);
 
-	XCLIB_sprintf(a6_mi0042, "INTERVAL  %5d  ", SYSCALL_0038_座標取得_相手距離(WORK_1P_0000));
+	XCLIB_sprintf(a6_mi0042, "INTERVAL  %5d  ", SYSCALL_0138_座標取得_相手距離(WORK_1P_0000));
 	SR_BG文字列描画(11, 23, a6_mi0042, 0x0c00);
 }
 
@@ -12488,59 +12058,35 @@ L00d2d2:
 	unlk	a6
 	rts
 
-L00d2dc:
-	movem.l	a3-a4,-(sp)
-	movea.l	($000c,sp),a4
-	movea.l	($0010,sp),a3
-	tst.w	($0ac2,a3)
-	beq	L00d2f6
-	tst.w	($0ac2,a4)
-	ble	L00d376
-L00d2f6:
-	tst.w	($09e2,a4)
-	blt	L00d376
-	cmpi.w	#$0027,($09e2,a4)
-	bgt	L00d31c
-	pea.l	($0000)
-	move.l	a3,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_007c_Cmd実行_防御)
-	lea.l	($000c,sp),sp
-	clr.w	($01be,a4)
-	bra	L00d34a
-L00d31c:
-	cmpi.w	#$0064,($09e4,a4)
-	beq	L00d344
-	pea.l	($0000)
-	move.l	a3,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_007c_Cmd実行_防御)
-	lea.l	($000c,sp),sp
-	clr.w	($01be,a4)
-	cmpi.w	#$0027,($09e4,a4)
-	bgt	L00d366
-	bra	L00d34a
-L00d344:
-	tst.w	($0f0c,a4)
-	beq	L00d362
-L00d34a:
-	cmpi.w	#$0027,($09e2,a3)
-	ble	L00d366
-	cmpi.w	#$0064,($09e4,a3)
-	bne	L00d366
-	move.w	#$0001,($01be,a3)
-	bra	L00d366
-L00d362:
-	clr.w	($01be,a3)
-L00d366:
-	movea.w	($09e2,a4),a0
-	move.l	a0,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SR_キャラ動作関数実行)
-	addq.w	#8,sp
-L00d376:
-	movem.l	(sp)+,a3-a4
-	rts
+L00d2dc(p1, p2)
+{
+	// p2のみ気集中状態の時終了
+	if (p2->0ac2_気集中 && p1->0ac2_気集中 <= 0)
+		return;
+
+	if (p1->09e2_動作ID < 0)
+		return;
+
+	// 攻撃動作IDの範囲内か？
+	if (p1->09e2_動作ID <= 39) {
+		SYSCALL_007c_Cmd実行_防御(p1, p2, 0);
+		p1->01be_防御許可 = 0;
+	} else {
+		if (p1->09e4_複合動作ID != ACT_アイドル) {
+			SYSCALL_007c_Cmd実行_防御(p1, p2, 0);
+			p1->01be_防御許可 = 0;
+		}
+		if (p1->09e4_複合動作ID == ACT_アイドル && p1->0f0c_SHOT攻撃フラグ == 0) {
+			p2->01be_防御許可 = 0;
+		}
+	}
+
+	if (p2->09e2_動作ID > 39 && p2->09e4_複合動作ID == ACT_アイドル) {
+		p2->01be_防御許可 = 1;
+	}
+
+	SR_キャラ動作関数実行(p1, p1->09e2_動作ID);
+}
 
 SR_CPU思考_超技:
 	movem.l	d3-d4/a3-a4,-(sp)
@@ -13292,107 +12838,68 @@ SYSCALL_02c4_気集中カウンタ_デクリメント:
 	subq.w	#1,(a0)
 	rts
 
-SYSCALL_0010_同期完了_攻撃:
-	movem.l	d3-d4/a3,-(sp)
-	movea.l	($0010,sp),a3
-	move.l	($0014,sp),d4
-	move.w	($09e2,a3),d3
-	tst.w	($0a86,a3)
-	beq	L00dbd8
-	jsr	(乱数発生)
-	move.w	d0,($05d6,a3)
-L00dbd8:
-	cmp.w	#$0066,d3
-	bne	L00dbec
-	move.l	d4,-(sp)
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_0124_同期完了_ジャンプ)
-	addq.w	#8,sp
-	bra	L00dc6a
-L00dbec:
-	move.l	a3,-(sp)
-	jsr	(SR_ヒット情報クリア)
-	addq.w	#4,sp
-	clr.w	($0a44,a3)
-	clr.w	($0a92,a3)
-	clr.w	($1744,a3)
-	pea.l	($0000)
-	pea.l	($0064)				;ACT_アイドル
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_0110_Cmd実行_動作)
-	lea.l	($000c,sp),sp
-	pea.l	($0000)
-	pea.l	($0064)
-	move.l	a3,-(sp)
-	jsr	(L00de22)
-	lea.l	($000c,sp),sp
-	pea.l	($0000)				;IVC_通常
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_00c0_状態設定_永続無敵)
-	addq.w	#8,sp
-	move.l	a3,-(sp)
-	jsr	(SR_キャラ超技関連フラグクリア)
-	addq.w	#4,sp
-	tst.w	($0a86,a3)
-	beq	L00dc6a
-	jsr	(SYSCALL_0148_場面取得_エンディング)
-	tst.w	d0
-	bne	L00dc6a
-	movea.l	($1278,a3),a0
-	cmpa.w	#$0000,a0
-	beq	L00dc6a
-	ext.l	d3
-	move.l	d3,-(sp)
-	move.l	d4,-(sp)
-	move.l	a3,-(sp)
-	jsr	(a0)
-	lea.l	($000c,sp),sp
-L00dc6a:
-	movem.l	(sp)+,d3-d4/a3
-	rts
+SYSCALL_0010_同期完了_攻撃(p1, p2)
+{
+	d3 = p1->09e2_動作ID;
 
-SYSCALL_0014_同期完了_複合攻撃:
-	move.l	a3,-(sp)
-	movea.l	($0008,sp),a3
-	clr.w	($0a3c,a3)
-	pea.l	($0000)
-	pea.l	($0065)
-	move.l	a3,-(sp)
-	jsr	(L00de22)
-	lea.l	($000c,sp),sp
-	move.l	a3,-(sp)
-	jsr	(SR_キャラキャンセル可能フラグクリア)
-	addq.w	#4,sp
-	move.l	a3,-(sp)
-	jsr	(SR_キャラ超技関連フラグクリア)
-	addq.w	#4,sp
-	clr.w	($0a42,a3)
-	movea.l	(sp)+,a3
-	rts
+	if (p1->0a86_CPU制御状態)
+		p1->05d6_多重化指定値 = 乱数発生();
 
-SYSCALL_00d8_同期完了_一般動作:
-	movea.l	($0004,sp),a0
-	move.l	($0008,sp),d0
-	cmpi.w	#$0066,($09e2,a0)		;ACT_ジャンプ
-	bne	L00dcc8
-	move.l	d0,-(sp)
-	move.l	a0,-(sp)
-	jsr	(SYSCALL_0124_同期完了_ジャンプ)
-	addq.w	#8,sp
-	bra	L00dcf0
-L00dcc8:
-	cmpi.w	#$0001,($0a90,a0)
-	ble	L00dcd6
-	move.w	#$0001,($0a90,a0)
-L00dcd6:
-	move.w	#$0070,($0008,a0)
-	pea.l	($0000)
-	pea.l	($0064)				;ACT_アイドル
-	move.l	a0,-(sp)
-	jsr	(SYSCALL_0110_Cmd実行_動作)
-	lea.l	($000c,sp),sp
-L00dcf0:
-	rts
+	if (d3 == ACT_ジャンプ) {
+		SYSCALL_0124_同期完了_ジャンプ(p1, p2);
+		return;
+	}
+
+	SR_ヒット情報クリア(p1);
+
+	p1->0a44_攻撃設定_最多ヒット数 = 0;
+	p1->0a92_SHOT消滅攻撃回数 = 0;
+	p1->1744_攻撃設定_SHOT反射回数 = 0;
+
+	SYSCALL_0110_Cmd実行_動作(p1, ACT_アイドル, 0);
+
+	L00de22(p1, ACT_アイドル, 0);
+
+	SYSCALL_00c0_状態設定_永続無敵(p1, IVC_通常);
+
+	SR_キャラ超技関連フラグクリア(p1);
+
+	if (p1->0a86_CPU制御状態 == 0)
+		return;
+
+	if (SYSCALL_0148_場面取得_エンディング())
+		return;
+
+	if (p1->1278_CPU_攻撃動作完了)
+		p1->Cpu_攻撃動作完了(p1, p2, d3);
+}
+
+SYSCALL_0014_同期完了_複合攻撃(p1)
+{
+	p1->0a3c_攻撃判定有無 = 0;
+
+	L00de22(p1, SUB_待機, 0);
+
+	SR_キャラキャンセル可能フラグクリア(p1);
+	SR_キャラ超技関連フラグクリア(p1);
+
+	p1->0a42_攻撃過程値 = 0;
+}
+
+SYSCALL_00d8_同期完了_一般動作(p1, p2)
+{
+	if (p1->09e2_動作ID == ACT_ジャンプ) {
+		SYSCALL_0124_同期完了_ジャンプ(p1, p2);
+		return;
+	}
+
+	if (p1->0a90_燃焼状態 > 1)
+		p1->0a90_燃焼状態 = 1;
+
+	p1->0008_Y座標 = BASE_LINE;
+
+	SYSCALL_0110_Cmd実行_動作(p1, ACT_アイドル, 0);
+}
 
 SYSCALL_0120_同期進行_ジャンプ着地:
 	move.l	a3,-(sp)
@@ -13479,35 +12986,22 @@ L00ddcc:
 L00ddce:
 	rts
 
-SYSCALL_0110_Cmd実行_動作:
-	movea.l	($0004,sp),a1			;a1=キャラハンドラ
-	move.w	($000a,sp),d1			;d1=ACT-ID
-	move.w	($000e,sp),d2			;d2=先頭サイクルフラグ
-	move.w	d1,d0
-	ext.l	d0
-	asl.l	#2,d0
-	lea.l	(a1,d0.l),a0
-	tst.l	($05e0,a0)				;動作関数テーブルに関数が登録されていない？
-	beq	L00de20						;即終了
-	cmp.w	#$0044,d1				;ACT-IDがACT_敗北転倒？
-	beq	L00de02						;分岐
-	tst.w	($01cc,a1)				;敗北状態？
-	bne	L00de00
-	cmpi.w	#$0044,($09e2,a1)		;現在の動作IDがACT_敗北転倒以外？
-	bne	L00de02
-L00de00:
-	moveq.l	#$65,d1					;d1=ACT_待機
-L00de02:							;敗北転倒状態か、敗北状態ではなくACT_敗北転倒以外のとき
-	move.w	#$0001,($09ec,a1)
-	move.w	d1,($09e0,a1)
-	tst.w	d2
-	beq	L00de1a
-	move.w	d1,($09e2,a1)
-	move.w	#$ffff,($173e,a1)		;先頭サイクルフラグを立てる
-L00de1a:
-	move.w	#$0001,($1324,a1)		;思考完了フラグを立てる
-L00de20:
-	rts
+SYSCALL_0110_Cmd実行_動作(p1, act, first)
+{
+	if (p1->05e0_動作関数テーブル[act*4] == 0)
+		return;
+
+	if (act != ACT_敗北転倒 && (p1->01cc_敗北状態 || p1->09e2_動作ID == ACT_敗北転倒))
+		act = ACT_待機;
+
+	p1->09ec_xxxx = 1;
+	p1->09e0_予約動作ID = act;
+	if (first) {
+		p1->09e2_動作ID = act;
+		p1->173e_先頭サイクルフラグ = -1;
+	}
+	p1->1324_思考完了フラグ = 1;
+}
 
 L00de22:
 	movea.l	($0004,sp),a1
@@ -13546,75 +13040,38 @@ L00de76:
 L00de78:
 	rts
 
-SYSCALL_012c_状態設定_しゃがみ:
-	movea.l	($0004,sp),a0
-	move.w	($000a,sp),($01bc,a0)			;しゃがみ状態設定
-	bne	L00deae								;ONのときスキップ
-	moveq.l	#$00,d1
-	move.l	d1,($0acc,a0)					;スティック直接状態書き込み
-	tst.w	($0a86,a0)						;CPU制御状態
-	beq	L00ded8								;人間操作のときスキップ
-	tst.w	($09f0,a0)
-	ble	L00ded8
-	tst.w	($01be,a0)						;防御許可
-	beq	L00ded8
-	cmpi.w	#$0001,($01b6,a0)				;表示方向
-	bne	L00deaa
-	moveq.l	#$04,d1							;右向き時4
-	bra	L00ded4
-L00deaa:
-	moveq.l	#$06,d1							;左向き時6
-	bra	L00ded4
-L00deae:
-	moveq.l	#$02,d1
-	move.l	d1,($0acc,a0)					;スティック直接状態
-	tst.w	($0a86,a0)						;CPU制御状態
-	beq	L00ded8
-	tst.w	($09f0,a0)
-	ble	L00ded8
-	tst.w	($01be,a0)
-	beq	L00ded8
-	cmpi.w	#$0001,($01b6,a0)				;表示方向
-	bne	L00ded2
-	moveq.l	#$01,d1							;右向き時1
-	bra	L00ded4
-L00ded2:
-	moveq.l	#$03,d1							;左向き時3
-L00ded4:
-	move.l	d1,($0acc,a0)					;スティック直接状態書き込み
-L00ded8:
-	rts
+SYSCALL_012c_状態設定_しゃがみ(p1, mode)
+{
+	p1->01bc_しゃがみ状態 = mode;
+	if (mode == 0) {
+		p1->0acc_スティック直接状態 = 0;
+		if (p1->0a86_CPU制御状態 == 0 || p1->09f0_防御同期値 == 0 || p1->01be_防御許可 == 0)
+			return;
+		p1->0acc_スティック直接状態 = p1->01b6_表示方向 == DRCT_右 ? 4 : 6;
+		return;
+	} else {
+		p1->0acc_スティック直接状態 = 2;
+		if (p1->0a86_CPU制御状態 == 0 || p1->09f0_防御同期値 == 0 || p1->01be_防御許可 == 0)
+			return;
+		p1->0acc_スティック直接状態 = p1->01b6_表示方向 == DRCT_右 ? 1 : 3;
+	}
+}
 
-SYSCALL_0134_演出設定_遅延ループ:
-	movem.l	d3/a3,-(sp)
-	move.w	($0012,sp),d3
-	tst.w	($000e,sp)
-	bne	L00df0c
-	tst.w	d3
-	ble	L00df18
-	lea.l	(SFSYSINFO_000c_ゲームスピード),a3
-L00def2:
-	tst.w	(a3)
-	beq	L00defe
-	jsr	(SR_タイマーD割込み処理終了待ち)
-	bra	L00df04
-L00defe:
-	jsr	(SR_最終ラスター割込み終了待ち)
-L00df04:
-	subq.w	#1,d3
-	tst.w	d3
-	bgt	L00def2
-	bra	L00df18
-L00df0c:
-	ext.l	d3
-	move.l	d3,-(sp)
-	jsr	(SR_VDISP回数指定待機)
-	addq.w	#4,sp
-L00df18:
-	movem.l	(sp)+,d3/a3
-	rts
+SYSCALL_0134_演出設定_遅延ループ(mode, num)
+{
+	if (mode == 0) {
+		for (d3 = 0; d3 < num; d3++) {
+			if (SFSYSINFO_000c_ゲームスピード)
+				SR_タイマーD割込み処理終了待ち();
+			else
+				SR_最終ラスター割込み終了待ち();
+		}
+	} else {
+		SR_VDISP回数指定待機(num);
+	}
+}
 
-SYSCALL_0038_座標取得_相手距離:
+SYSCALL_0138_座標取得_相手距離:
 	movea.l	($0004,sp),a1			;a1=キャラハンドラ
 	movea.l	($132a,a1),a0			;a0=相手ハンドラ
 	cmpi.w	#$0001,($01b6,a1)		;自分の表示方向がDRCT_右ではない？
@@ -13645,14 +13102,12 @@ L00df60:
 	ext.l	d0
 	rts
 
-SYSCALL_013c_攻撃設定_SHOT反射:
-	movea.l	($0004,sp),a0
-	move.w	($000e,sp),d0
-	move.w	($0012,sp),d1
-	move.w	($000a,sp),($1744,a0)
-	move.w	d0,($1746,a0)
-	move.w	d1,($1748,a0)
-	rts
+SYSCALL_013c_攻撃設定_SHOT反射(p1, num, hrev, vrev)
+{
+	p1->1744_攻撃設定_SHOT反射回数 = num;
+	p1->1746_攻撃設定_SHOT反射水平方向 = hrev;
+	p1->1748_攻撃設定_SHOT反射垂直方向 = vrev;
+}
 
 SYSCALL_0140_XXXX:
 	moveq.l	#$00,d0
@@ -14384,619 +13839,280 @@ SR_ヒットストップ・キャラ振動設定:
 	move.w	d0,($0f22,a0)					;キャラ振動
 	rts
 
-L00e688:
-	link	a6,#-$0004
-	movem.l	d3-d7/a3-a5,-(sp)
-	movea.l	($0008,a6),a5					;a5=キャラハンドラ
-	movea.l	($000c,a6),a4
-	move.l	($0010,a6),(-$0004,a6)
-	cmpi.w	#$0001,($0a3c,a5)				;攻撃判定有無のチェック
-	bne	L00e6ac
-	move.w	#$0004,($0a3c,a5)				;1のとき4に上書き
-L00e6ac:
-	lea.l	($0a3c,a5),a0
-	subq.w	#1,(a0)
-	cmpi.w	#$0002,($0a3c,a5)
-	bgt	L00e6bc
-	clr.w	(a0)
-L00e6bc:
-	cmpi.w	#$006f,($0008,a4)				;相手のY座標がベースライン以下か
-	bgt	L00e6d0
-	tst.l	($0f02,a5)						;空中ヒット情報が設定されている？
-	beq	L00e6d0
-	move.l	($0f02,a5),(-$0004,a6)
-L00e6d0:
-	cmpi.w	#$0001,($01b6,a5)				;自分の表示方向がDRCT_右か
-	bne	L00e6ea
-	move.w	($0a2c,a5),d4			;右向き時攻撃矩形X1
-	move.w	($0a2e,a5),d5
-	move.w	($0a30,a5),d6
-	move.w	($0a32,a5),d7
-	bra	L00e6fa
-L00e6ea:
-	move.w	($0a34,a5),d4			;左向き時攻撃矩形X1
-	move.w	($0a36,a5),d5
-	move.w	($0a38,a5),d6
-	move.w	($0a3a,a5),d7
-L00e6fa:
-	moveq.l	#$00,d3
-	tst.w	($0a92,a5)						;SHOT消滅攻撃回数
-	ble	L00e722
-	movea.w	d7,a3
-	move.l	a3,-(sp)
-	movea.w	d6,a3
-	move.l	a3,-(sp)
-	movea.w	d5,a3
-	move.l	a3,-(sp)
-	movea.w	d4,a3
-	move.l	a3,-(sp)
-	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	jsr	(L016964)
-	lea.l	($0018,sp),sp
-	move.w	d0,d3
-L00e722:
-	tst.w	($1744,a5)
-	ble	L00e748
-	movea.w	d7,a3
-	move.l	a3,-(sp)
-	movea.w	d6,a3
-	move.l	a3,-(sp)
-	movea.w	d5,a3
-	move.l	a3,-(sp)
-	movea.w	d4,a3
-	move.l	a3,-(sp)
-	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	jsr	(L016b60)
-	lea.l	($0018,sp),sp
-	or.w	d0,d3
-L00e748:
-	tst.w	d3
-	beq	L00e7f2
-	pea.l	($0001)
-	movea.l	(-$0004,a6),a3
-	movea.w	(a3),a3
-	move.l	a3,-(sp)
-	movea.w	d7,a0
-	lea.l	(a0,d6.w),a3
-	move.l	a3,d0
-	asr.l	#1,d0
-	movea.l	d0,a3
-	pea.l	($0008,a3)
-	movea.w	d5,a0
-	lea.l	(a0,d4.w),a3
-	move.l	a3,d0
-	asr.l	#1,d0
-	movea.l	d0,a3
-	pea.l	(-$0008,a3)
-	move.l	a4,-(sp)
-	jsr	(L00f282)
-	lea.l	($0014,sp),sp
-	pea.l	($0000)				;引数3:キャラ振動
-	movea.l	(-$0004,a6),a3
-	movea.w	($0008,a3),a3
-	move.l	a3,-(sp)			;引数2:ヒットストップ
-	move.l	a5,-(sp)			;引数1:キャラハンドラ
-	jsr	(SR_ヒットストップ・キャラ振動設定)
-	lea.l	($000c,sp),sp
-	pea.l	($0000)
-	movea.l	(-$0004,a6),a3
-	movea.w	($0008,a3),a3
-	move.l	a3,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SR_ヒットストップ・キャラ振動設定)
-	lea.l	($000c,sp),sp
-	movea.l	(-$0004,a6),a3
-	tst.w	($000c,a3)
-	beq	L00e7f2
-	cmpi.w	#$0031,($000c,a3)
-	bgt	L00e7d4
-	movea.w	($000c,a3),a3
-	move.l	a3,-(sp)
-	bra	L00e7e4
-L00e7d4:
-	movea.l	(-$0004,a6),a3
-	movea.w	($000c,a3),a0
-	adda.w	($000a,a5),a0
-	pea.l	(-$0001,a0)
-L00e7e4:
-	movea.w	($000a,a4),a3
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_0024_音声再生)
-	addq.w	#8,sp
-L00e7f2:
-	tst.w	($0a44,a5)
-	bgt	L00e800
-	clr.w	($0a3c,a5)
-	bra	L00ea10
-L00e800:
-	tst.w	($01cc,a4)				;敗北状態
-	bne	L00e80e
-	tst.w	($01c0,a4)				;無敵状態
-	bne	L00ea10
-L00e80e:
-	move.l	a4,-(sp)
-	movea.w	d7,a3
-	move.l	a3,-(sp)
-	movea.w	d6,a3
-	move.l	a3,-(sp)
-	movea.w	d5,a3
-	move.l	a3,-(sp)
-	movea.w	d4,a3
-	move.l	a3,-(sp)
-	jsr	(L00cbee)
-	lea.l	($0014,sp),sp
-	tst.w	d0
-	beq	L00ea10
-	clr.w	($0a3c,a5)
-	cmpi.w	#$0001,($01b6,a4)
-	bne	L00e84e
-	movea.w	($0a0c,a4),a1
-	move.w	($0a0e,a4),d0
-	movea.w	($0a10,a4),a2
-	move.w	($0a12,a4),d1
-	bra	L00e85e
-L00e84e:
-	movea.w	($0a14,a4),a1
-	move.w	($0a16,a4),d0
-	movea.w	($0a18,a4),a2
-	move.w	($0a1a,a4),d1
-L00e85e:
-	move.w	($01c4,a5),($01c2,a5)		;必殺技キャンセル設定フラグの値を必殺技キャンセル実効フラグにコピー
-	move.l	(-$0004,a6),($1326,a4)		;被ヒット情報設定
-	movea.w	d0,a0
-	lea.l	(a0,a1.w),a0
-	adda.w	d4,a0
-	adda.w	d5,a0
-	move.l	a0,d0
-	asr.l	#2,d0
-	move.w	d0,d4
-	subq.w	#8,d4
-	movea.w	d1,a0
-	lea.l	(a0,a2.w),a0
-	movea.w	d6,a1
-	adda.l	a1,a0
-	movea.w	d7,a2
-	adda.l	a2,a0
-	adda.l	a1,a0
-	adda.l	a2,a0
-	adda.l	a1,a0
-	adda.l	a2,a0
-	adda.l	a1,a0
-	adda.l	a2,a0
-	adda.l	a1,a0
-	adda.l	a2,a0
-	adda.l	a1,a0
-	adda.l	a2,a0
-	adda.l	a1,a0
-	move.l	a0,d0
-	add.l	a2,d0
-	asr.l	#4,d0
-	move.w	d0,d3
-	addq.w	#8,d3
-	movea.l	(-$0004,a6),a3
-	cmpi.w	#$0002,($000a,a3)
-	beq	L00e998
-	tst.w	($01cc,a5)					;敗北状態
-	bne	L00e998
-	moveq.l	#$00,d1
-	cmpi.w	#$0045,($09e0,a4)			;ACT_地上防御
-	beq	L00e8d8
-	cmpi.w	#$0064,($09e0,a4)			;ACT_アイドル
-	bne	L00e8fc
-	tst.w	($09f0,a4)
-	ble	L00e8fc
-L00e8d8:
-	movea.l	(-$0004,a6),a3
-	move.w	($000a,a3),d0				;立ち・しゃがみガード可能の攻撃か？
-	beq	L00e924
-	cmp.w	#$0001,d0					;立ちガード可能の攻撃か？
-	bne	L00e8ee
-	tst.w	($01bc,a4)					;しゃがみ状態チェック
-	beq	L00e924							;立ちのとき分岐
-L00e8ee:
-	cmp.w	#$ffff,d0					;しゃがみガード可能の攻撃か？
-	bne	L00e926
-	tst.w	($01bc,a4)					;しゃがみ状態か？
-	beq	L00e926							;立ちのとき分岐
-	bra	L00e924							;しゃがみのとき分岐
-L00e8fc:
-	cmpi.w	#$006e,($09e0,a4)			;6e=ACT_空中防御
-	beq	L00e912
-	cmpi.w	#$0066,($09e0,a4)			;66=ACT_ジャンプ
-	bne	L00e926
-	tst.w	($09f0,a4)
-	ble	L00e926
-L00e912:
-	cmpi.w	#$006f,($0008,a5)			;Y座標がベースライン以下か？
-	bgt	L00e926
-	move.w	($01b6,a4),d2				;表示方向
-	cmp.w	($01b8,a5),d2				;相対方向
-	beq	L00e926
-L00e924:
-	moveq.l	#$01,d1
-L00e926:
-	tst.w	d1
-	beq	L00e998							;ガードできなかった時の分岐
-	clr.w	($0a5a,a4)
-	clr.w	($0a5a,a5)
-	pea.l	($0001)
-	pea.l	($0000)
-	ext.l	d3
-	move.l	d3,-(sp)
-	ext.l	d4
-	move.l	d4,-(sp)
-	move.l	(-$0004,a6),-(sp)
-	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	jsr	(L00ed6e)
-	lea.l	($001c,sp),sp
-	subq.w	#1,($0a44,a5)				;最多ヒット数をデクリメント
-	tst.w	($01cc,a4)					;敗北状態チェック
-	bne	L00e964
-	pea.l	($000b)
-	bra	L00e988
-L00e964:
-	movea.l	(-$0004,a6),a3
-	cmpi.w	#$0031,($000c,a3)
-	bgt	L00e978
-	movea.w	($000c,a3),a3
-	move.l	a3,-(sp)
-	bra	L00e988
-L00e978:
-	movea.l	(-$0004,a6),a3
-	movea.w	($000c,a3),a0
-	adda.w	($000a,a5),a0
-	pea.l	(-$0001,a0)
-L00e988:
-	movea.w	($000a,a4),a3
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_0024_音声再生)
-	addq.w	#8,sp
-	bra	L00ea10
-L00e998:
-	pea.l	($0000)
-	jsr	(SR_PCM8ファンクションコール_L017eba)
-	addq.w	#4,sp
-	movea.w	($000a,a4),a3
-	move.l	a3,-(sp)
-	jsr	(SR_PCM8ファンクションコール_L017eba)
-	addq.w	#4,sp
-	pea.l	($0001)
-	ext.l	d3
-	move.l	d3,-(sp)
-	ext.l	d4
-	move.l	d4,-(sp)
-	move.l	(-$0004,a6),-(sp)
-	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	jsr	(L00eab8)
-	lea.l	($0018,sp),sp
-	subq.w	#1,($0a44,a5)
-	movea.l	(-$0004,a6),a3
-	tst.w	($000c,a3)
-	beq	L00ea0c
-	cmpi.w	#$0031,($000c,a3)
-	bgt	L00e9ee
-	movea.w	($000c,a3),a3
-	move.l	a3,-(sp)
-	bra	L00e9fe
-L00e9ee:
-	movea.l	(-$0004,a6),a3
-	movea.w	($000c,a3),a0
-	adda.w	($000a,a5),a0
-	pea.l	(-$0001,a0)
-L00e9fe:
-	movea.w	($000a,a4),a3
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_0024_音声再生)
-	addq.w	#8,sp
-L00ea0c:
-	moveq.l	#$01,d0
-	bra	L00ea12
-L00ea10:
-	moveq.l	#$00,d0
-L00ea12:
-	movem.l	(-$0024,a6),d3-d7/a3-a5
-	unlk	a6
-	rts
+SR_攻撃ヒット判定・体力減少処理(p1, p2, *hit)
+{
+	a6_mi0004 = hit;
 
-SYSCALL_0054_ゲージ増減_体力:
+	if (p1->0a3c_攻撃判定有無 == 1)
+		p1->0a3c_攻撃判定有無 = 4;
+
+	if (--p1->0a3c_攻撃判定有無 <= 2)
+		p1->0a3c_攻撃判定有無 = 0;
+
+	if (p2->0008_Y座標 <= BASE_LINE-1 && p1->0f02_空中ヒット情報)
+		a6_mi0004 = p1->0f02_空中ヒット情報;
+
+	if (p1->01b6_表示方向 == DRCT_右) {
+		d4 = p1->0a2c_右向き時攻撃矩形X1;
+		d5 = p1->0a2e_右向き時攻撃矩形X2;
+		d6 = p1->0a30_右向き時攻撃矩形Y1;
+		d7 = p1->0a32_右向き時攻撃矩形Y2;
+	} else {
+		d4 = p1->0a34_左向き時攻撃矩形X1;
+		d5 = p1->0a36_左向き時攻撃矩形X2;
+		d6 = p1->0a38_左向き時攻撃矩形Y1;
+		d7 = p1->0a3a_左向き時攻撃矩形Y2;
+	}
+
+	d3 = 0;
+	if (p1->0a92_SHOT消滅攻撃回数 > 0)
+		d3 = SR_SHOT消滅攻撃_SHOT接触判定(p1, p2, d4, d5, d6, d7);
+	if (p1->1744_攻撃設定_SHOT反射回数 > 0)
+		d3 |= SR_SHOT反射攻撃_SHOT接触判定(p1, p2, d4, d5, d6, d7);
+
+	if (d3) {
+		L00f282(p2, (d4+d5)/2-8, (d6+d7)/2+8, a6_mi0004, 1); 
+		SR_ヒットストップ・キャラ振動設定(p1, a6_mi0004->st, 0);
+		SR_ヒットストップ・キャラ振動設定(p2, a6_mi0004->st, 0);
+
+		if (a6_mi0004->pcm) {
+			if (a6_mi0004->pcm <= 49)
+				SYSCALL_0024_音声再生(p2->000a_プレイヤー番号, a6_mi0004->pcm);
+			else
+				SYSCALL_0024_音声再生(p2->000a_プレイヤー番号, a6_mi0004->pcm + p1->000a_プレイヤー番号 - 1);
+		}
+	}
+
+	if (p1->0a44_攻撃設定最多ヒット数 <= 0) {
+		p1->0a3c_攻撃判定有無 = 0;
+		return 0;
+	}
+
+	if (p2->01cc_敗北状態 == 0 && p2->01c0_無敵状態 != 0)
+		return 0;
+
+	if (L00cbee(d4, d5, d6, d7, p2) == 0)
+		return 0;
+
+	p1->0a3c_攻撃判定有無 = 0;
+
+	if (p2->01b6_表示方向 == DRCT_右) {
+		a1 = p1->0a0c_右向き時存在矩形X1;
+		d0 = p1->0a0e_右向き時存在矩形X2;
+		a2 = p1->0a10_右向き時存在矩形Y1;
+		d1 = p1->0a12_右向き時存在矩形Y2;
+	} else {
+		a1 = p1->0a14_左向き時存在矩形X1;
+		d0 = p1->0a16_左向き時存在矩形X2;
+		a2 = p1->0a18_左向き時存在矩形Y1;
+		d1 = p1->0a1a_左向き時存在矩形Y2;
+	}
+
+	p1->01c2_必殺技キャンセル許可状態 = p1->01c4_必殺技キャンセル設定値;
+	p2->1326_被ヒット情報 = a6_mi0004;
+
+	d4 = (d0+a1+d4+d5)/4-8;
+	d3 = (d1+a2+(d6+d7)*7)/16+8;
+
+	d1 = 0;
+	if (a6_mi0004->pt != PTGA_不可 && p1->01cc_敗北状態 == 0) {
+		if (p2->09e0_動作ID == ACT_地上防御 || (p2->09e0_動作ID == ACT_アイドル && p2->09f0_防御同期値 > 0)) {
+			if (a6_mi0004->pt == PTGA_中段) {
+				d1 = 1;
+			} else if (a6_mi0004->pt == PTGA_上段) {
+				if (p2->01bc_しゃがみ状態 == 0) {
+					d1 = 1;
+				}
+			} else if (a6_mi0004->pt == PTGA_下段) {
+				if (p2->01bc_しゃがみ状態) {
+					d1 = 1;
+				}
+			}
+		} else if (p2->09e0_動作ID == ACT_空中防御 || (p2->09e0_動作ID == ACT_ジャンプ && p2->09f0_防御同期値 > 0) {
+			if (p1->0008_Y座標 <= BASE_LINE -1 && p2->01b6_表示方向 == p1->01b8_相対方向) {
+				d1 = 1;
+			}
+		}
+	}
+
+	if (d1 != 0) {
+		// 防御時
+		p2->0a5a_xxxx = 0;
+		p1->0a5a_xxxx = 0;
+
+		SR_ガード時ガード動作適用・体力減少(p1, p2, a6_mi0004, d4, d3, 0, 1);
+		p1->0a44_攻撃設定最多ヒット数--;
+
+		if (p2->01cc_敗北状態 == 0) {
+			SYSCALL_0024_音声再生(p2->000a_プレイヤー番号, PCM_防御);
+			return 0;
+		}
+
+		if (a6_mi0004->pcm <= 49)
+			SYSCALL_0024_音声再生(p2->000a_プレイヤー番号, a6_mi0004->pcm);
+		else
+			SYSCALL_0024_音声再生(p2->000a_プレイヤー番号, a6_mi0004->pcm + p1->プレイヤー番号 - 1);
+
+		return 0;
+	}
+
+	// ヒット時
+	SR_PCM8ファンクションコール_L017eba(0);
+	SR_PCM8ファンクションコール_L017eba(p2->プレイヤー番号);
+	SR_ヒット時くらい動作適用・体力減少(p1, p2, a6_mi0004, d4, d3, 1);
+
+	p1->0a44_攻撃設定最多ヒット数--;
+	if (a6_mi0004->pcm) {
+		if (a6_mi0004->pcm <= 49)
+			SYSCALL_0024_音声再生(p2->000a_プレイヤー番号, a6_mi0004->pcm);
+		else
+			SYSCALL_0024_音声再生(p2->000a_プレイヤー番号, a6_mi0004->pcm + p1->プレイヤー番号 - 1);
+	}
+	return 1;
+}
+
+SYSCALL_0054_ゲージ増減_体力(p1, val)
+{
 	move.l	a3,-(sp)
-	movea.l	($0008,sp),a3
-	move.w	($000e,sp),d1
-	bge	L00ea48
-	move.w	d1,d0
-	muls.w	#$ffff,d0
-	pea.l	($0000)
-	ext.l	d0
-	move.l	d0,-(sp)
-	move.l	a3,-(sp)
-	move.l	($132a,a3),-(sp)
-	jsr	(SYSCALL_0038_状態設定_残り体力)
-	lea.l	($0010,sp),sp
-	bra	L00eab4
-L00ea48:
-	tst.w	d1
-	ble	L00eab4
-	move.w	($002e,a3),d0
-	asr.w	#1,d0
-	movea.w	d0,a0
-	ext.l	d1
-	move.l	d1,-(sp)
-	pea.l	($004a,a0)
-	jsr	(SR_32bit乗算)
-	addq.w	#8,sp
-	asr.l	#7,d0
-	move.w	d0,d1
-	cmpi.w	#$0001,($000a,a3)
-	bne	L00ea78
-	move.w	(SFSYSINFO_0038_1Pダメージ倍率),d0
-	bra	L00ea7e
-L00ea78:
-	move.w	(SFSYSINFO_0042_2Pダメージ倍率),d0
-L00ea7e:
-	cmp.w	#$0001,d0
-	beq	L00ea8c
-	cmp.w	#$0002,d0
-	beq	L00ea90
-	bra	L00ea92
-L00ea8c:
-	asr.w	#1,d1
-	bra	L00ea92
-L00ea90:
-	add.w	d1,d1
-L00ea92:
-	cmp.w	#$0002,d0
-	bgt	L00eaa6
-	tst.w	d1
-	bgt	L00eaa2
-	addq.w	#1,($002e,a3)
-	bra	L00eaa6
-L00eaa2:
-	add.w	d1,($002e,a3)
+	movea.l	($0008,sp),a3		;p1
+	move.w	($000e,sp),d1		;val
+
+	if (val < 0) {
+		SYSCALL_0038_状態設定_残り体力(p1->132a_相手ハンドラ, p1, -val, 0);
+		return;
+	}
+
+	if (val <= 0)
+		return;
+
+	d1 = SR_32bit乗算(002e_残り体力/2 + 74, val) / 128;
+
+	d0 = p1->000a_プレイヤー番号 == 1 ? SFSYSINFO_0038_1Pダメージ倍率 : SFSYSINFO_0042_2Pダメージ倍率;
+
+	if (d0 == 1)
+		d1 /= 2;
+	else if (d0 == 2)
+		d1 *= 2;
+	else if (d0 > 2)
+		goto L00eaa6;
+
+	if (d1 > 0)
+		p1->002e_残り体力 += d1;
+	else
+		p1->002e_残り体力++;
+
 L00eaa6:
-	cmpi.w	#$0058,($002e,a3)
-	ble	L00eab4
-	move.w	#$0058,($002e,a3)
-L00eab4:
-	movea.l	(sp)+,a3
-	rts
+	if (p1->002e_残り体力 > 88)
+		p1->002e_残り体力 = 88;
+}
 
-L00eab8:
+SR_ヒット時くらい動作適用・体力減少:
 	movem.l	d3-d7/a3-a6,-(sp)
 	movea.l	($0028,sp),a6			;a6=p1
 	movea.l	($002c,sp),a4			;a4=p2
 	movea.l	($0030,sp),a5			;a5=ヒット情報
-	move.w	($0036,sp),d6
-	move.w	($003a,sp),d5
-	move.w	($003e,sp),d7
-	move.w	($000e,a5),d3
+	move.w	($0036,sp),d6			;d6=x
+	move.w	($003a,sp),d5			;d5=y
+	move.w	($003e,sp),d7			;d7=振り向きフラグ
+	move.w	($000e,a5),d3			;d3 = hit->act
 	move.w	d3,d4
-	cmpa.w	#$0000,a5				;ヒット情報指定なし？
-	beq	L00ed3e
-	pea.l	($0000)
-	move.l	a6,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_007c_Cmd実行_防御)					;SYSCALL_007c_Cmd実行_防御(p2, p1, 0)
-	lea.l	($000c,sp),sp
-	pea.l	($0001)					;引数5:1
-	movea.w	(a5),a1
-	move.l	a1,-(sp)				;引数4:ヒット時攻撃力
-	ext.l	d5
-	move.l	d5,-(sp)				;引数3:arg5
-	ext.l	d6
-	move.l	d6,-(sp)				;引数2:arg4
-	move.l	a4,-(sp)				;引数1:p2
-	jsr	(L00f282)					;L00f282(p2, arg4, arg5, ヒット時攻撃力, 1);
-	lea.l	($0014,sp),sp
-	tst.w	($01cc,a4)				;p2敗北状態
-	beq	L00eb4c
-	pea.l	($0000)
-	move.w	($0008,a5),d0			;ヒットストップ
-	asr.w	#1,d0
-	ext.l	d0
-	move.l	d0,-(sp)
-	move.l	a6,-(sp)
-	lea.l	(SR_ヒットストップ・キャラ振動設定),a3
-	jsr	(a3)						;SR_ヒットストップ・キャラ振動設定(p1, ヒットストップ/2, 0);
-	lea.l	($000c,sp),sp
-	pea.l	($0001)
-	move.w	($0008,a5),d0
-	asr.w	#1,d0
-	ext.l	d0
-	move.l	d0,-(sp)
-	move.l	a4,-(sp)
-	jsr	(a3)						;SR_ヒットストップ・キャラ振動設定(p2, ヒットストップ/2, 1);
-	lea.l	($000c,sp),sp
-	bra	L00ed3e
-L00eb4c:
-	pea.l	($0000)
-	movea.w	($0008,a5),a1
-	move.l	a1,-(sp)
-	move.l	a6,-(sp)
-	lea.l	(SR_ヒットストップ・キャラ振動設定),a3
-	jsr	(a3)						;SR_ヒットストップ・キャラ振動設定(p1, ヒットストップ, 0);
-	lea.l	($000c,sp),sp
-	pea.l	($0001)
-	movea.w	($0008,a5),a1
-	move.l	a1,-(sp)
-	move.l	a4,-(sp)
-	jsr	(a3)						;SR_ヒットストップ・キャラ振動設定(p2, ヒットストップ, 1);
-	lea.l	($000c,sp),sp
-	move.l	a4,-(sp)
-	jsr	(SR_キャラ超技関連フラグクリア)
-	addq.w	#4,sp
-	clr.w	($0a5a,a4)
-	clr.w	($0a5a,a6)
-	clr.w	($0a42,a4)				;p2攻撃過程値クリア
-	clr.w	($0aa8,a4)				;p2残像クリア
-	tst.w	d7
-	beq	L00eba0
-	move.w	($01b6,a6),d0			;p1表示方向
-	ext.l	d0
-	neg.l	d0
-	move.l	d0,-(sp)				;表示方向反転
-	bra	L00eba6
-L00eba0:
-	movea.w	($01b6,a6),a1
-	move.l	a1,-(sp)
-L00eba6:
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_01c8_状態設定_表示方向)
-	addq.w	#8,sp
-	move.w	($01b6,a4),($09e8,a4)	;p2動作方向をp2表示方向に一致させる
-	jsr	(SYSCALL_0148_場面取得_エンディング)
-	tst.w	d0
-	bne	L00ecae						;エンディング中だったら分岐
-	cmp.w	#$0028,d4				;ACT_地上くらい１(40)か？
-	bne	L00ebd6
-	tst.w	($01bc,a4)				;しゃがみ状態か？
-	beq	L00ebd2
-	moveq.l	#$2a,d3					;ACT_下衝撃１
-	bra	L00ebfc
-L00ebd2:
-	moveq.l	#$29,d3					;ACT_上衝撃１
-	bra	L00ebfc
-L00ebd6:
-	cmp.w	#$002b,d4				;ACT_地上くらい２(43)か？
-	bne	L00ebea
-	tst.w	($01bc,a4)				;しゃがみ状態か？
-	beq	L00ebe6
-	moveq.l	#$3e,d3					;ACT_下衝撃２
-	bra	L00ebfc
-L00ebe6:
-	moveq.l	#$3d,d3					;ACT_上衝撃２
-	bra	L00ebfc
-L00ebea:
-	cmp.w	#$0041,d4				;ACT_根元くらい(65)か？
-	bne	L00ebfc
-	tst.w	($01bc,a4)				;しゃがみ状態か？
-	beq	L00ebfa
-	moveq.l	#$40,d3					;ACT_下衝撃３
-	bra	L00ebfc
-L00ebfa:
-	moveq.l	#$3f,d3					;ACT_上衝撃
-L00ebfc:
-	cmpi.w	#$006f,($0008,a4)		;Y座標チェック
-	bgt	L00ec3e
-	cmp.w	#$002d,d4				;ACT_転ぶ(45)か？
-	beq	L00ec3e
-	cmp.w	#$0030,d4				;ACT_空中連続衝撃(48)か？
-	beq	L00ec3e
-	cmp.w	#$003c,d4				;ACT_空中波動くらい(60)か？
-	beq	L00ec3e
-	tst.l	($0f02,a6)				;空中ヒット情報が設定されている？
-	beq	L00ec26
-	movea.l	($0f02,a6),a0
-	move.w	($000e,a0),d3			;空中ヒット情報のくらいACT-ID
-	bra	L00ec3e
-L00ec26:
-	cmp.w	#$0041,d4				;ACT_根元くらい(65)か？
-	bne	L00ec30
-	moveq.l	#$2f,d3					;ACT_ふっとぶ
-	bra	L00ec3e
-L00ec30:
-	cmp.w	#$002f,d4				;ACT_ふっとぶ(47)か？
-	beq	L00ec3e
-	cmp.w	#$0051,d4				;ユーザ定義のくらい動作(82以上)か？
-	bgt	L00ec3e
-	moveq.l	#$2e,d3					;ACT_はねかえり
-L00ec3e:
-	movea.w	d3,a1
-	move.l	a1,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SR_くらい・システム動作開始)					;SR_くらい・システム動作開始(p2, act_id);
-	addq.w	#8,sp
-	cmp.w	#$002f,d3				;ACT_ふっとぶ(47)か？
-	beq	L00ec64
-	cmp.w	#$002d,d3				;ACT_転ぶ(45)か？
-	beq	L00ec64
-	cmp.w	#$002e,d3				;ACT_はねかえり(46)か？
-	beq	L00ec64
-	cmp.w	#$003c,d3				;ACT_空中波動くらい(60)か？
-	bne	L00ec6a
-L00ec64:
-	pea.l	($0100)				;IVC_ゾンビ
-	bra	L00ec74
-L00ec6a:
-	cmp.w	#$0030,d3				;ACT_空中連続衝撃(48)か？
-	bne	L00ec7e
-	pea.l	($0000)				;IVC_通常
-L00ec74:
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_00c0_状態設定_永続無敵)
-	addq.w	#8,sp
+
+	if (hit == 0) return;
+
+	SYSCALL_007c_Cmd実行_防御(p2, p1, 0)
+
+	L00f282(p2, arg4, arg5, hit->dm, 1);
+
+	if (p2->01cc_敗北状態) {
+		SR_ヒットストップ・キャラ振動設定(p1, hit->st/2, 0);
+		SR_ヒットストップ・キャラ振動設定(p2, hit->st/2, 1);
+		got L00ed3e;
+	} else {
+		SR_ヒットストップ・キャラ振動設定(p1, hit->st, 0);
+		SR_ヒットストップ・キャラ振動設定(p2, hit->st, 1);
+
+		SR_キャラ超技関連フラグクリア(p2);
+
+		p1->0a5a_xxxx = p2->0a5a_xxxx = 0;
+		p2->0a42_攻撃過程値 = 0;
+		p2->0aa8_残像 = 0;
+
+		if (d7)
+			SYSCALL_01c8_状態設定_表示方向(p2, -p1->01b6_表示方向);
+		else
+			SYSCALL_01c8_状態設定_表示方向(p2, p1->01b6_表示方向);
+
+		p2->09e8_動作方向 = p2->01b6_表示方向;
+
+		if (SYSCALL_0148_場面取得_エンディング == 0) {
+			if (hit->act == ACT_地上くらい１) {
+				if (p2->01bc_しゃがみ状態)
+					d3 = ACT_下衝撃１;
+				else
+					d3 = ACT_上衝撃１;
+			} else if (hit->act == ACT_地上くらい２) {
+				if (p2->01bc_しゃがみ状態)
+					d3 = ACT_下衝撃２;
+				else
+					d3 = ACT_上衝撃２;
+			} else if (hit->act == ACT_根元くらい) {
+				if (p2->01bc_しゃがみ状態)
+					d3 = ACT_下衝撃３;
+				else
+					d3 = ACT_上衝撃３;
+			}
+			
+			if (p2->0008_Y座標 <= BASE_LINE-1 && hit->act not in [ACT_転ぶ, ACT_空中連続衝撃, ACT_空中波動くらい]) {
+				if (p1->0f02_空中ヒット情報) {
+					d3 = p1->0f02_空中ヒット情報->act;
+				} else if (hit->act == ACT_根元くらい) {
+					d3 = ACT_ふっとぶ;
+				} else if (hit->act != ACT_ふっとぶ && hit->act <= 81) {	// 81 = システム定義のくらい動作ID最大値
+					d3 = ACT_はねかえり;
+				}
+			}
+
+			SR_くらい・システム動作開始(p2, d3);
+			
+			if (d3 in [ACT_ふっとぶ, ACT_転ぶ, ACT_はねかえり, ACT_空中波動くらい]) {
+				SYSCALL_00c0_状態設定_永続無敵(p2, IVC_ゾンビ);
+			} else if (d3 == ACT_空中連続衝撃) {
+				SYSCALL_00c0_状態設定_永続無敵(p2, IVC_通常);
+			}
+
 L00ec7e:
-	movea.w	($0004,a5),a1
-	move.l	a1,-(sp)
-	movea.w	(a5),a1
-	move.l	a1,-(sp)
-	move.l	a4,-(sp)
-	move.l	a6,-(sp)
-	jsr	(SYSCALL_0038_状態設定_残り体力)	;(p1, p2, ヒット時攻撃力, ピヨリ値);
-	lea.l	($0010,sp),sp
-	tst.w	($0006,a5)				;燃焼値
-	ble	L00ed0c						;0以下の時スキップ
-	move.w	($0006,a5),($0a90,a4)	;p2燃焼状態設定
-	move.l	a4,-(sp)
-	jsr	(SR_スプライトパレット設定_黒)					;SR_スプライトパレット設定_黒(p2);
-	addq.w	#4,sp
-	bra	L00ed0c
-L00ecae:
-	cmp.w	#$002f,d4
-	bne	L00ecfc
-	moveq.l	#$44,d3
-	pea.l	($00cc)				;cc=OPT_ダメージ
-	move.l	a4,-(sp)
-	lea.l	(SR_キャラ動作関数実行),a3
-	jsr	(a3)
-	addq.w	#8,sp
-	pea.l	($00fc)				;fc=VCT_悲鳴処理
-	move.l	a4,-(sp)
-	jsr	(a3)
-	addq.w	#8,sp
-	move.w	#$0001,($01cc,a4)
-	clr.w	($01c8,a4)
-	clr.w	($01b4,a4)
-	clr.w	($1752,a4)
-	move.l	a4,-(sp)
-	jsr	(SR_キャラクター身体パレット設定)
-	addq.w	#4,sp
-	pea.l	($0100)				;IVC_ゾンビ
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_00c0_状態設定_永続無敵)
-	addq.w	#8,sp
-	bra	L00ecfe
-L00ecfc:
-	moveq.l	#$6a,d3
-L00ecfe:
-	ext.l	d3
-	move.l	d3,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SR_くらい・システム動作開始)
-	addq.w	#8,sp
-L00ed0c:
-	move.w	($000a,a4),d0		;p2プレイヤー番号
-	ext.l	d0					;1024倍
-	moveq.l	#$0a,d2
-	asl.l	d2,d0
-	move.w	($09e0,a4),d1		;p2予約動作ID
-	ext.l	d1
-	asl.l	#2,d1				;4倍
-	movea.l	d0,a0
-	adda.l	#INIメッセージ_ジャンプテーブル,a0
-	move.l	(a0,d1.l),(L06f432)
-	beq	L00ed3e
-	move.l	a6,-(sp)
-	move.l	a4,-(sp)
-	movea.l	(L06f432),a0
-	jsr	(a0)					;INIメッセージ実行
-	addq.w	#8,sp
-L00ed3e:
-	movem.l	(sp)+,d3-d7/a3-a6
-	rts
+			SYSCALL_0038_状態設定_残り体力(p1, p2, hit->dm, hit->py);
+			if (hit->bu) {
+				p2->0a90_燃焼状態 = hit->bu;
+				SR_スプライトパレット設定_黒(p2);
+			}
+		} else {
+			// エンディング演武中の処理
+			if (hit->act == ACT_ふっとぶ) {
+				d3 = ACT_敗北転倒;
+
+				SR_キャラ動作関数実行(p2, OPT_ダメージ);
+				SR_キャラ動作関数実行(p2, VCT_悲鳴処理);
+
+				p2->01cc_敗北状態 = 1;
+				p2->01c8_xxxx = 0;
+				p2->01b4_変身状態 = 0;
+				p2->1752_防御キャンセル技フラグ = 0;
+
+				SR_キャラクター身体パレット設定(p2);
+				SYSCALL_00c0_状態設定_永続無敵(p2, IVC_ゾンビ);
+			} else {
+				d3 = ACT_ターゲット1;
+			}
+
+			SR_くらい・システム動作開始(p2, d3);
+		}
+	}
+	
+	L06f432 = INIメッセージ_ジャンプテーブル[p2->000a_プレイヤー番号 * 1024 + p2->09e0_予約動作ID * 4];
+	if (L06f432)
+		(*L06f432)(p2, p1);
+}
 
 SR_くらい・システム動作開始(p1, act_id)
 {
@@ -15005,113 +14121,45 @@ SR_くらい・システム動作開始(p1, act_id)
 		SYSCALL_0110_Cmd実行_動作(p1, act_id, 0);
 }
 
-L00ed6e:
-	movem.l	d3-d5/a3-a6,-(sp)
-	movea.l	($0020,sp),a5
-	movea.l	($0024,sp),a4
-	movea.l	($0028,sp),a6
-	move.w	($002e,sp),d5
-	move.w	($0032,sp),d4
-	move.w	($003a,sp),d3
-	cmpi.w	#$006f,($0008,a4)
-	bgt	L00ed98
-	pea.l	($006e)
-	bra	L00ed9c
-L00ed98:
-	pea.l	($0045)
-L00ed9c:
-	move.l	a4,-(sp)
-	jsr	(SR_くらい・システム動作開始)
-	addq.w	#8,sp
-	tst.w	d3
-	beq	L00edb6
-	move.w	($01b6,a5),d0
-	ext.l	d0
-	neg.l	d0
-	move.l	d0,-(sp)
-	bra	L00edbc
-L00edb6:
-	movea.w	($01b6,a5),a1
-	move.l	a1,-(sp)
-L00edbc:
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_01c8_状態設定_表示方向)
-	addq.w	#8,sp
-	move.w	($01b6,a4),d0
-	move.w	d0,($1758,a4)
-	move.w	d0,($09e8,a4)
-	pea.l	($0000)				;IVC_通常
-	move.l	a5,-(sp)
-	jsr	(SYSCALL_00c0_状態設定_永続無敵)
-	addq.w	#8,sp
-	pea.l	($0002)
-	pea.l	($0000)
-	ext.l	d4
-	move.l	d4,-(sp)
-	ext.l	d5
-	move.l	d5,-(sp)
-	move.l	a4,-(sp)
-	jsr	(L00f282)
-	lea.l	($0014,sp),sp
-	pea.l	($0000)
-	movea.w	($0008,a6),a1
-	move.l	a1,-(sp)
-	move.l	a5,-(sp)
-	lea.l	(SR_ヒットストップ・キャラ振動設定),a3
-	jsr	(a3)
-	lea.l	($000c,sp),sp
-	pea.l	($0001)
-	movea.w	($0008,a6),a1
-	move.l	a1,-(sp)
-	move.l	a4,-(sp)
-	jsr	(a3)
-	lea.l	($000c,sp),sp
-	move.l	a4,-(sp)
-	jsr	(SR_キャラ超技関連フラグクリア)
-	addq.w	#4,sp
-	move.w	#$7fff,($09f0,a4)
-	pea.l	($00f8)					;f8=VCT_防御姿勢表示処理
-	move.l	a4,-(sp)
-	jsr	(SR_キャラ動作関数実行)
-	addq.w	#8,sp
-	pea.l	($0000)
-	movea.w	($0002,a6),a1
-	move.l	a1,-(sp)
-	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	jsr	(SYSCALL_0038_状態設定_残り体力)
-	lea.l	($0010,sp),sp
-	tst.w	($002e,a4)
-	bge	L00ee7e
-	lea.l	(SFSYSINFO_001e_デバッグモード有効フラグ),a0
-	tst.w	(a0)
-	beq	L00ee72
-	tst.w	($0464,a0)
-	bne	L00ee7e
-L00ee72:
-	tst.w	($0006,a6)
-	ble	L00ee7e
-	move.w	($0006,a6),($0a90,a4)
-L00ee7e:
-	move.w	($000a,a4),d0
-	ext.l	d0
-	moveq.l	#$0a,d2
-	asl.l	d2,d0
-	move.w	($09e0,a4),d1
-	ext.l	d1
-	asl.l	#2,d1
-	movea.l	d0,a0
-	adda.l	#INIメッセージ_ジャンプテーブル,a0
-	move.l	(a0,d1.l),(L06f432)
-	beq	L00eeb0
-	move.l	a5,-(sp)
-	move.l	a4,-(sp)
-	movea.l	(L06f432),a0
-	jsr	(a0)
-	addq.w	#8,sp
-L00eeb0:
-	movem.l	(sp)+,d3-d5/a3-a6
-	rts
+SR_ガード時ガード動作適用・体力減少(p1, p2, hit, x, y, 向かい合わせフラグ)
+{
+	if (p2->0008_Y座標 <= BASE_LINE-1)
+		SR_くらい・システム動作開始(p2, ACT_空中防御);
+	else
+		SR_くらい・システム動作開始(p2, ACT_地上防御);
+
+	if (向かい合わせフラグ)
+		SYSCALL_01c8_状態設定_表示方向(p2, -p1->01b6_表示方向);
+	else
+		SYSCALL_01c8_状態設定_表示方向(p2, p1->01b6_表示方向);
+
+	p2->1758_xxxx = p2->01b6_表示方向;
+	p2->09e8_動作方向 = p2->01b6_表示方向;
+
+	SYSCALL_00c0_状態設定_永続無敵(p1, IVC_通常);
+
+	L00f282(p2, d5, d4, 0, 2);
+
+	SR_ヒットストップ・キャラ振動設定(p1, hit->st, 0);
+	SR_ヒットストップ・キャラ振動設定(p2, hit->st, 1);
+
+	SR_キャラ超技関連フラグクリア(p2);
+
+	p2->09f0_防御同期値 = 32767;
+
+	SR_キャラ動作関数実行(p2, VCT_防御姿勢表示処理);
+
+	SYSCALL_0038_状態設定_残り体力(p1, p2, hit->df, 0);
+
+	if (p2->002e_残り体力 < 0 && (SFSYSINFO_001e_デバッグモード有効フラグ == 0 || SFSYSINFO_0464_デバッグ_トレーニングモード == 0) {
+		if (hit->bu > 0)
+			p2->0a90_燃焼状態 = hit->bu;
+	}
+
+	L06f432 = INIメッセージ_ジャンプテーブル[p2->000a_プレイヤー番号 * 1024 + p2->09e0_予約動作Id * 4];
+	if (L06f432)
+		(*L06f432)(p2, p1);
+}
 
 SYSCALL_0038_状態設定_残り体力(p1, p2, dm, ft)
 {
@@ -17553,228 +16601,115 @@ L010e52:
 	addq.w	#4,sp
 	rts
 
-L010e5e:
-	movem.l	a3-a5,-(sp)
-	movea.l	($0010,sp),a4
-	movea.l	($0014,sp),a5
-	move.l	a4,-(sp)
-	lea.l	(SR_STC_TRG_直接状態更新),a3
-	jsr	(a3)
-	addq.w	#4,sp
-	move.l	a5,-(sp)
-	jsr	(a3)
-	addq.w	#4,sp
-	tst.w	($0ac2,a4)				;気集中状態チェック
-	bgt	L011110
-	tst.w	($0ac2,a5)
-	bgt	L011110
-	tst.w	($0aca,a4)
-	beq	L010ecc
-	tst.w	($0a86,a4)				;CPU制御状態チェック
-	beq	@f							;人間制御の時スキップ
-	move.w	($09e2,a4),d0
-	ext.l	d0
-	asl.l	#2,d0
-	lea.l	(a4,d0.l),a0
-	movea.l	($0f24,a0),a0
-	cmpa.w	#$0000,a0
-	beq	L010ecc
-	move.l	a5,-(sp)
-	move.l	a4,-(sp)
-	jsr	(a0)						;CPU思考ルーチン実行
-	bra	L010eca
-@@:	tst.w	($0ce4,a4)
-	ble	@f
-	subq.w	#1,($0ce4,a4)			;1p受け身コマンド実行状態をデクリメント
-@@:	move.l	a5,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SR_コマンド判定処理一括実行)	;1p側実行
-L010eca:
-	addq.w	#8,sp
-L010ecc:
-	tst.w	($0aca,a5)
-	beq	L010f0c
-	tst.w	($0a86,a5)
-	beq	@f						;人間制御の場合スキップ
-	move.w	($09e2,a5),d0
-	ext.l	d0
-	asl.l	#2,d0
-	lea.l	(a5,d0.l),a0
-	movea.l	($0f24,a0),a0
-	cmpa.w	#$0000,a0
-	beq	L010f0c
-	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	jsr	(a0)						;CPU思考ルーチン実行
-	bra	L010f0a
-@@:	tst.w	($0ce4,a5)
-	ble	@f
-	subq.w	#1,($0ce4,a5)
-@@:	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	jsr	(SR_コマンド判定処理一括実行)	;2p側実行
-L010f0a:
-	addq.w	#8,sp
-L010f0c:
-	tst.w	($0f1a,a4)					;シューティングモード
-	bne	L011110
-	tst.w	($0f1a,a5)
-	bne	L011110
-	tst.w	($0aca,a4)
-	beq	L011110
-	tst.w	($0aca,a5)
-	beq	L011110
-	cmpi.w	#$0001,($0ce2,a4)			;1p受け身==1のとき継続(Cmd実行_地上投げ()実行フレーム)
-	bne	L010fae
-	cmpi.w	#$0001,($0ce2,a5)			;2p受け身==1のとき継続
-	bne	L010fae
-	cmpi.w	#$0068,($09e2,a4)			;ACT_ピヨピヨ
-	bne	@f
-	pea.l	($0000)
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_0104_CMD実行_受け身)	;1p気絶中は1p受け身成立状態無効化
-	addq.w	#8,sp
-@@:	cmpi.w	#$0068,($09e2,a5)			;ACT_ピヨピヨ
-	bne	@f
-	pea.l	($0000)
-	move.l	a5,-(sp)
-	jsr	(SYSCALL_0104_CMD実行_受け身)	;2p気絶中は2p受け身成立状態無効化
-	addq.w	#8,sp
-@@:	clr.w	($0ce2,a5)
-	clr.w	($0ce2,a4)
-	jsr	(乱数発生)
-	cmp.l	#$00003fdd,d0
-	bgt	L010f92
-	cmpi.w	#$0068,($09e2,a5)			;ACT_ピヨピヨ
-	beq	@f
-	move.w	#$0100,($0ce2,a5)			;2p受け身成立
-@@:	move.l	a5,-(sp)
-	move.l	a4,-(sp)
-	bra	L010fa4
-L010f92:
-	cmpi.w	#$0068,($09e2,a4)			;ACT_ピヨピヨ
-	beq	@f
-	move.w	#$0100,($0ce2,a4)			;1p受け身成立
-@@:	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-L010fa4:
-	jsr	(L01118e)
-	bra	L0110f4
-L010fae:								;1p2pどちらかがCmd実行_地上投げ()の実行フレームではない時に来る
-	cmpi.w	#$0001,($0ce2,a4)
-	bne	L011024							;1pがCmd実行_地上投げ()の実行フレームのとき続行
-	cmpi.w	#$0068,($09e2,a4)
-	bne	@f
-	pea.l	($0000)
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_0104_CMD実行_受け身)	;1pが気絶中のとき1p受け身無効化
-	addq.w	#8,sp
-@@:	cmpi.w	#$0068,($09e2,a5)
-	bne	@f
-	pea.l	($0000)
-	move.l	a5,-(sp)
-	jsr	(SYSCALL_0104_CMD実行_受け身)	;2pが気絶中のとき2p受け身無効化
-	addq.w	#8,sp
-@@:	clr.w	($0ce2,a5)
-	clr.w	($0ce2,a4)
-	cmpi.w	#$0068,($09e2,a5)			;ACT_ピヨピヨ
-	beq	@@f
-	tst.w	($0a86,a5)					;CPU制御状態
-	beq	@f
-	movea.l	($12c4,a5),a0				;CPU_実行_受け身
-	cmpa.w	#$0000,a0
-	beq	@f
-	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	jsr	(a0)
-	addq.w	#8,sp
-@@:	tst.w	($0ce4,a5)
-	ble	@f
-	move.w	#$0100,($0ce2,a5)
-@@:	move.l	a5,-(sp)
-	move.l	a4,-(sp)
-	jsr	(L01118e)
-	bra	L0110f4
-L011024:
-	cmpi.w	#$0001,($0ce2,a5)
-	bne	L011098
-	cmpi.w	#$0068,($09e2,a4)
-	bne	@f
-	pea.l	($0000)
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_0104_CMD実行_受け身)	;1p受け身無効化
-	addq.w	#8,sp
-@@:	cmpi.w	#$0068,($09e2,a5)
-	bne	@f
-	pea.l	($0000)
-	move.l	a5,-(sp)
-	jsr	(SYSCALL_0104_CMD実行_受け身)	;2p受け身無効化
-	addq.w	#8,sp
-@@:	clr.w	($0ce2,a5)
-	clr.w	($0ce2,a4)
-	cmpi.w	#$0068,($09e2,a4)
-	beq	@@f
-	tst.w	($0a86,a4)
-	beq	@f
-	movea.l	($12c4,a4),a0
-	cmpa.w	#$0000,a0
-	beq	@f
-	move.l	a5,-(sp)
-	move.l	a4,-(sp)
-	jsr	(a0)
-	addq.w	#8,sp
-@@:	tst.w	($0ce4,a4)
-	ble	@f
-	move.w	#$0100,($0ce2,a4)
-@@:	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-	jsr	(L01118e)
-	bra	L0110f4
-L011098:
-	cmpi.w	#$0001,($0ef0,a4)
-	bne	L0110c4
-	cmpi.w	#$0001,($0ef0,a5)
-	bne	L0110c4
-	clr.w	($0ef0,a5)
-	clr.w	($0ef0,a4)
-	jsr	(乱数発生)
-	cmp.l	#$00003fdd,d0
-	bgt	L0110ea
-	move.l	a5,-(sp)
-	move.l	a4,-(sp)
-	bra	L0110ee
-L0110c4:
-	cmpi.w	#$0001,($0ef0,a4)
-	bne	L0110da
-	clr.w	($0ef0,a5)
-	clr.w	($0ef0,a4)
-	move.l	a5,-(sp)
-	move.l	a4,-(sp)
-	bra	L0110ee
-L0110da:
-	cmpi.w	#$0001,($0ef0,a5)
-	bne	L011110
-	clr.w	($0ef0,a5)
-	clr.w	($0ef0,a4)
-L0110ea:
-	move.l	a4,-(sp)
-	move.l	a5,-(sp)
-L0110ee:
-	jsr	(L011206)
-L0110f4:
-	addq.w	#8,sp
-	pea.l	($0000)
-	move.l	a4,-(sp)
-	lea.l	(SYSCALL_0104_CMD実行_受け身),a3
-	jsr	(a3)					;1p受け身無効化
-	addq.w	#8,sp
-	pea.l	($0000)
-	move.l	a5,-(sp)
-	jsr	(a3)					;2p受け身無効化
-	addq.w	#8,sp
-L011110:
-	movem.l	(sp)+,a3-a5
-	rts
+SR_投げ成立チェック(p1, p2)
+{
+	SR_STC_TRG_直接状態更新(p1);
+	SR_STC_TRG_直接状態更新(p2);
+
+	if (p1->0ac2_気集中 > 0 || p2->0ac2_気集中 > 0)
+		return;
+
+	if (p1->0aca_xxxx) {
+		if (p1->0a86_CPU制御状態) {
+			a0 = p1->0f24_CPU動作関数[p1->09e2_動作ID * 4];
+			if (a0) a0(p1, p2);
+		} else {
+			if (p1->0ce4_受け身入力成立期間 > 0)
+				--p1->0ce4_受け身入力成立期間;
+			SR_コマンド判定処理一括実行(p1, p2);
+		}
+	}
+
+	if (p2->0aca_xxxx) {
+		if (p2->0a86_CPU制御状態) {
+			a0 = p2->0f24_CPU動作関数[p2->09e2_動作ID * 4];
+			if (a0) a0(p2, p1);
+		} else {
+			if (p2->0ce4_受け身入力成立期間 > 0)
+				--p2->0ce4_受け身入力成立期間;
+			SR_コマンド判定処理一括実行(p2, p1);
+		}
+	}
+
+	if (p1->0f1a_シューティングモード || p2->0f1a_シューティングモード || p1->0aca_xxxx == 0 || p2->0aca_xxxx == 0)
+		return;
+
+	if (p1->0ce2_投げコマンド成立フラグ == 1 && p2->0ce2_投げコマンド成立フラグ == 1) {
+		if (p1->09e2_動作ID == ACT_ピヨピヨ)
+			SYSCALL_0104_CMD実行_受け身(p1, 0);
+		if (p2->09e2_動作ID == ACT_ピヨピヨ)
+			SYSCALL_0104_CMD実行_受け身(p2, 0);
+
+		p1->0ce2_投げコマンド成立フラグ = 0;
+		p2->0ce2_投げコマンド成立フラグ = 0;
+
+		if (乱数発生() <= 16349) {
+			if (p2->09e2_動作ID != ACT_ピヨピヨ)
+				p2->0ce2_投げコマンド成立フラグ = 256;
+			SR_投げ・投げられ開始(p1, p2);
+		} else {
+			if (p1->09e2_動作ID != ACT_ピヨピヨ)
+				p1->0ce2_投げコマンド成立フラグ = 256;
+			SR_投げ・投げられ開始(p2, p1);
+		}
+	} else if (p1->0ce2_投げコマンド成立フラグ == 1) {
+		if (p1->09e2_動作ID == ACT_ピヨピヨ)
+			SYSCALL_0104_CMD実行_受け身(p1, 0);
+		if (p2->09e2_動作ID == ACT_ピヨピヨ)
+			SYSCALL_0104_CMD実行_受け身(p2, 0);
+
+		p1->0ce2_投げコマンド成立フラグ = 0;
+		p2->0ce2_投げコマンド成立フラグ = 0;
+
+		if (p2->09e2_動作ID != ACT_ピヨピヨ) {
+			if (p2->0a86_CPU制御状態 && p2->12c4_CPU_実行_受け身) {
+				p2->12c4_CPU_実行_受け身(p2, p1);
+			}
+			if (p2->0ce4_受け身入力成立期間 > 0)
+				p2->0ce2_投げコマンド成立フラグ = 256;
+		}
+		SR_投げ・投げられ開始(p1, p2);
+	} else if (p2->0ce2_投げコマンド成立フラグ == 1) {
+		if (p1->09e2_動作ID == ACT_ピヨピヨ)
+			SYSCALL_0104_CMD実行_受け身(p1, 0);
+		if (p2->09e2_動作ID == ACT_ピヨピヨ)
+			SYSCALL_0104_CMD実行_受け身(p2, 0);
+
+		p1->0ce2_投げコマンド成立フラグ = 0;
+		p2->0ce2_投げコマンド成立フラグ = 0;
+
+		if (p1->09e2_動作ID != ACT_ピヨピヨ) {
+			if (p1->0a86_CPU制御状態 && p1->12c4_CPU_実行_受け身) {
+				p1->12c4_CPU_実行_受け身(p1, p2);
+			}
+			if (p1->0ce4_受け身入力成立期間 > 0)
+				p1->0ce2_投げコマンド成立フラグ = 256;
+		}
+		SR_投げ・投げられ開始(p2, p1);
+	} else if (p1->0ef0_空中投げコマンド成立フラグ == 1 && p2->0ef0_空中投げコマンド成立フラグ == 1) {
+		p1->0ef0_空中投げコマンド成立フラグ = 0;
+		p2->0ef0_空中投げコマンド成立フラグ = 0;
+
+		if (乱数発生() <= 16349) {
+			SR_空中投げ・投げられ開始(p1, p2);
+		} else {
+			SR_空中投げ・投げられ開始(p2, p1);
+		}
+	} else if (p1->0ef0_空中投げコマンド成立フラグ == 1) {
+		p1->0ef0_空中投げコマンド成立フラグ = 0;
+		p2->0ef0_空中投げコマンド成立フラグ = 0;
+		SR_空中投げ・投げられ開始(p1, p2);
+	} else if (p2->0ef0_空中投げコマンド成立フラグ == 1) {
+		p1->0ef0_空中投げコマンド成立フラグ = 0;
+		p2->0ef0_空中投げコマンド成立フラグ = 0;
+		SR_空中投げ・投げられ開始(p2, p1);
+	} else {
+		return;
+	}
+
+	SYSCALL_0104_CMD実行_受け身(p1, 0);
+	SYSCALL_0104_CMD実行_受け身(p2, 0);
+}
 
 L011116:
 	movem.l	a3-a5,-(sp)
@@ -17818,81 +16753,33 @@ L011188:
 	movem.l	(sp)+,a3-a5
 	rts
 
-L01118e:
-	movem.l	a3-a5,-(sp)
-	movea.l	($0010,sp),a3
-	movea.l	($0014,sp),a4
-	movea.w	($1736,a3),a0			;実行中の投げACT-ID
-	move.l	a0,-(sp)
-	move.l	a4,-(sp)
-	move.l	a3,-(sp)
-	jsr	(SR_CPU思考_超技)
-	lea.l	($000c,sp),sp
-	move.l	a3,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_0010_同期完了_攻撃)
-	addq.w	#8,sp
-	pea.l	($0000)
-	movea.w	($1736,a3),a0
-	move.l	a0,-(sp)
-	move.l	a3,-(sp)
-	lea.l	(SYSCALL_0110_Cmd実行_動作),a5
-	jsr	(a5)
-	lea.l	($000c,sp),sp
-	pea.l	($0000)
-	movea.w	($1738,a3),a0			;実行中の投げられACT-ID
-	move.l	a0,-(sp)
-	move.l	a4,-(sp)
-	jsr	(a5)
-	lea.l	($000c,sp),sp
-	movea.w	($000a,a4),a0
-	move.l	a0,-(sp)
-	jsr	(SR_PCM8ファンクションコール_L017eba)
-	addq.w	#4,sp
-	pea.l	($0100)				;IVC_ゾンビ
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_00c0_状態設定_永続無敵)
-	addq.w	#8,sp
-	movem.l	(sp)+,a3-a5
-	rts
+SR_投げ・投げられ開始(p1, p2)
+{
+	SR_CPU思考_超技(p1, p2, p1->1736_実行中の投げACT_ID);
 
-L011206:
-	movem.l	a3-a5,-(sp)
-	movea.l	($0010,sp),a3
-	movea.l	($0014,sp),a4
-	movea.w	($173a,a3),a0
-	move.l	a0,-(sp)
-	move.l	a4,-(sp)
-	move.l	a3,-(sp)
-	jsr	(SR_CPU思考_超技)
-	lea.l	($000c,sp),sp
-	move.l	a3,-(sp)
-	move.l	a4,-(sp)
-	jsr	(SYSCALL_0010_同期完了_攻撃)
-	addq.w	#8,sp
-	pea.l	($0000)
-	movea.w	($173a,a3),a0
-	move.l	a0,-(sp)
-	move.l	a3,-(sp)
-	lea.l	(SYSCALL_0110_Cmd実行_動作),a5
-	jsr	(a5)
-	lea.l	($000c,sp),sp
-	pea.l	($0000)
-	movea.w	($173c,a3),a0
-	move.l	a0,-(sp)
-	move.l	a4,-(sp)
-	jsr	(a5)
-	lea.l	($000c,sp),sp
-	movea.w	($000a,a4),a0
-	move.l	a0,-(sp)
-	jsr	(SR_PCM8ファンクションコール_L017eba)
-	addq.w	#4,sp
-	pea.l	($0100)				;IVC_ゾンビ
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_00c0_状態設定_永続無敵)
-	addq.w	#8,sp
-	movem.l	(sp)+,a3-a5
-	rts
+	SYSCALL_0010_同期完了_攻撃(p2, p1);
+
+	SYSCALL_0110_Cmd実行_動作(p1, p1->1736_実行中の投げACT_ID, 0);
+	SYSCALL_0110_Cmd実行_動作(p2, p1->1738_実行中の投げられACT_ID, 0);
+
+	SR_PCM8ファンクションコール_L017eba(p2->000a_プレイヤー番号);
+
+	SYSCALL_00c0_状態設定_永続無敵(p1, IVC_ゾンビ);
+}
+
+SR_空中投げ・投げられ開始(p1, p2)
+{
+	SR_CPU思考_超技(p1, p2, p1->173a_実行中の空中投げACT_ID);
+
+	SYSCALL_0010_同期完了_攻撃(p2, p1);
+
+	SYSCALL_0110_Cmd実行_動作(p1, p1->173a_実行中の空中投げACT_ID, 0);
+	SYSCALL_0110_Cmd実行_動作(p2, p1->173c_実行中の空中投げられACT_ID, 0);
+
+	SR_PCM8ファンクションコール_L017eba(p2->000a_プレイヤー番号);
+
+	SYSCALL_00c0_状態設定_永続無敵(p1, IVC_ゾンビ);
+}
 
 SR_コマンド判定処理一括実行:
 	movem.l	d3/a3-a4,-(sp)
@@ -18086,43 +16973,25 @@ L011492:
 	movem.l	(sp)+,d3/a3
 	rts
 
-SYSCALL_00f4_CMD条件_地上必殺技:
-	move.l	a3,-(sp)
-	movea.l	($0008,sp),a3
-	move.w	($000e,sp),d1
-	move.w	($0012,sp),d0
-	clr.w	($1740,a3)
-	tst.w	($1324,a3)
-	bne	L0114f8
-	cmpi.w	#$006f,($0008,a3)		;Y座標がベースラインより上か？
-	ble	L0114f8						;無効を返して終了
-	cmpi.w	#$0064,($09e2,a3)		;ACT-IDがACT_アイドルか？
-	beq	L0114ea						;有効を返して終了
-	cmpi.w	#$0045,($09e2,a3)		;ACT_地上防御以外か？
-	bne	L0114ee						;分岐
-	tst.w	d0						;ガードキャンセルフラグが0か
-	beq	L0114f8						;無効を返して終了
-	pea.l	($0013)
-	pea.l	($0001)
-	move.l	a3,-(sp)
-	jsr	(L01231e)
-	lea.l	($000c,sp),sp
-	tst.w	d0
-	beq	L0114f8
-	move.w	#$0001,($1740,a3)		;ガードキャンセル有効
-L0114ea:
-	moveq.l	#$01,d0
-	bra	L0114fa
-L0114ee:
-	tst.w	d1						;キャンセルフラグが0か？
-	beq	L0114f8						;無効を返して終了
-	tst.w	($01c2,a3)				;リバーサル受付中か？
-	bne	L0114ea						;有効を返して終了
-L0114f8:
-	moveq.l	#$00,d0
-L0114fa:
-	movea.l	(sp)+,a3
-	rts
+SYSCALL_00f4_CMD条件_地上必殺技(p1, bCancel, gCancel)
+{
+	p1->1740_防御キャンセル可能フラグ = 0;
+	if (p1->1324_思考完了フラグ) return 0;
+
+	if (p1->0008_Y座標 <= BASE_LINE-1) return 0;
+	if (p1->09e2_動作ID == ACT_アイドル) return 1;
+	if (p1->09e2_動作ID == ACT_地上防御) {
+		if (gCancel == 0) return 0;
+		if (L01231e(p1, 1, 19) == 0) return 0;
+
+		p1->1740_防御キャンセル可能フラグ = 1;
+		return 1;
+	}
+	if (bCancel == 0) return 0;
+	if (p1->01c2_必殺技キャンセル許可状態) return 1;
+
+	return 0;
+}
 
 SYSCALL_00f8_Cmd条件_空中必殺技:
 	movem.l	d3/a3,-(sp)
@@ -18355,46 +17224,24 @@ L0117a2:
 	movem.l	(sp)+,d3-d4/a3-a5
 	rts
 
-SYSCALL_0094_CMD実行_地上基本技:
-	movem.l	d3-d5/a3,-(sp)
-	movea.l	($0014,sp),a3			;a3=キャラハンドラ
-	move.w	($001a,sp),d3			;d3=ACT-ID
-	move.l	($132a,a3),d5			;d5=相手ハンドラ
-	tst.w	($1324,a3)				;思考完了フラグはONか？
-	bne	L011816						;何もせず終了
-	move.w	d3,d4
-	ext.l	d4
-	move.l	d4,d0
-	asl.l	#2,d0
-	lea.l	(a3,d0.l),a0
-	tst.l	($05e0,a0)				;ACT-IDに対応する動作関数は未登録？
-	beq	L011816						;何もせず終了
-	move.l	d5,-(sp)
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_0044_キャラクタ向かい合わせ設定)
-	addq.w	#8,sp
-	tst.w	($175a,a3)
-	ble	L0117f6
-	pea.l	($0000)
-	move.l	d4,-(sp)
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_0110_Cmd実行_動作)
-	lea.l	($000c,sp),sp
-	bra	L011804
-L0117f6:
-	move.w	d3,($09e0,a3)			;行動予約
-	move.w	d3,($09e2,a3)			;現在の動作ID
-	move.w	#$0001,($09ec,a3)
-L011804:
-	ext.l	d3
-	move.l	d3,-(sp)
-	move.l	d5,-(sp)
-	move.l	a3,-(sp)
-	jsr	(SR_CPU思考_超技)
-	lea.l	($000c,sp),sp
-L011816:
-	movem.l	(sp)+,d3-d5/a3
-	rts
+SYSCALL_0094_CMD実行_地上基本技(p1, act_id)
+{
+	p2 = p1->132a_相手ハンドラ;
+
+	if (p1->1324_思考完了フラグ) return;
+	if (p1->(05e0_動作関数テーブル先頭 + act_id + 4) == 0) return;
+
+	SYSCALL_0044_キャラクタ向かい合わせ設定(p1, p2);
+
+	if (p1->175a_xxxx > 0) {
+		SYSCALL_0110_Cmd実行_動作(p1, act_id);
+	} else {
+		p1->09e0_予約動作ID = act_id;
+		p1->09e2_動作ID = act_id;
+		p1->09ec_xxxx = 1;
+	}
+	SR_CPU思考_超技(p1, p2, act_id);
+}
 
 SYSCALL_0098_CMD実行_空中基本技:
 	movem.l	d3-d4/a3,-(sp)
@@ -20162,7 +19009,7 @@ L012b8a:
 	addq.w	#8,sp
 L012bb2:
 	move.l	a3,-(sp)
-	jsr	(SYSCALL_0038_座標取得_相手距離)
+	jsr	(SYSCALL_0138_座標取得_相手距離)
 	addq.w	#4,sp
 	move.w	d0,d3
 	tst.w	($09f0,a3)
@@ -23987,7 +22834,7 @@ L0164ce:
 	move.l	a4,-(sp)
 	move.l	a3,-(sp)
 	move.l	a6,-(sp)
-	jsr	(L016830)
+	jsr	(SR_対SHOTヒット・ガード可否判定＆体力減少)
 	lea.l	($0010,sp),sp
 	jsr	(乱数発生)
 	movea.w	d3,a0
@@ -24196,7 +23043,7 @@ L01675a:
 	move.l	a4,-(sp)
 	move.l	a3,-(sp)
 	move.l	a3,-(sp)
-	jsr	(L016830)
+	jsr	(SR_対SHOTヒット・ガード可否判定＆体力減少)
 	lea.l	($0010,sp),sp
 	jsr	(乱数発生)
 	movea.w	d3,a0
@@ -24249,122 +23096,64 @@ L01682a:
 	movem.l	(sp)+,d3-d5/a3-a6
 	rts
 
-L016830:
-	link	a6,#-$0010
-	movem.l	d3/a3-a5,-(sp)
-	movea.l	($0008,a6),a5
-	movea.l	($000c,a6),a3
-	movea.l	($0010,a6),a0
-	move.w	($0016,a6),d3
-	movea.l	($0022,a0),a4
-	move.w	($000a,a4),d0
-	move.l	a4,($1326,a3)
-	cmp.w	#$0002,d0
-	beq	L0168ec
-	tst.w	($01cc,a5)
-	bne	L0168ec
-	moveq.l	#$00,d1
-	cmpi.w	#$0045,($09e0,a3)
-	beq	L01687c
-	cmpi.w	#$0064,($09e0,a3)
-	bne	L01689a
-	tst.w	($09f0,a3)
-	ble	L01689a
-L01687c:
-	tst.w	d0
-	beq	L0168c0
-	cmp.w	#$0001,d0
-	bne	L01688c
-	tst.w	($01bc,a3)
-	beq	L0168c0
-L01688c:
-	cmp.w	#$ffff,d0
-	bne	L0168c2
-	tst.w	($01bc,a3)
-	beq	L0168c2
-	bra	L0168c0
-L01689a:
-	cmpi.w	#$006e,($09e0,a3)
-	beq	L0168b0
-	cmpi.w	#$0066,($09e0,a3)
-	bne	L0168c2
-	tst.w	($09f0,a3)
-	ble	L0168c2
-L0168b0:
-	move.w	($01b6,a3),d2
-	cmp.w	($0028,a0),d2
-	beq	L0168c2
-	cmp.w	#$ffff,d0
-	beq	L0168c2
-L0168c0:
-	moveq.l	#$01,d1
-L0168c2:
-	tst.w	d1
-	beq	L0168ec
-	move.w	#$0001,($0a5a,a3)
-	ext.l	d3
-	move.l	d3,-(sp)
-	pea.l	($0014)
-	pea.l	($01f4)
-	pea.l	($0000)
-	move.l	a4,-(sp)
-	move.l	a3,-(sp)
-	move.l	a5,-(sp)
-	jsr	(L00ed6e)
-	moveq.l	#$00,d0
-	bra	L01695a
-L0168ec:
-	jsr	(SYSCALL_0148_場面取得_エンディング)
-	tst.w	d0
-	bne	L016906
-	ext.l	d3
-	move.l	d3,-(sp)
-	pea.l	($01f4)
-	pea.l	($0000)
-	move.l	a4,-(sp)
-	bra	L01692a
-L016906:
-	clr.w	(-$0010,a6)
-	clr.w	(-$000c,a6)
-	move.w	($0008,a4),(-$0008,a6)
-	move.w	#$002f,(-$0002,a6)
-	ext.l	d3
-	move.l	d3,-(sp)
-	pea.l	($01f4)
-	pea.l	($0000)
-	pea.l	(-$0010,a6)
-L01692a:
-	move.l	a3,-(sp)
-	move.l	a5,-(sp)
-	jsr	(L00eab8)
-	lea.l	($0018,sp),sp
-	tst.w	($0006,a4)
-	ble	L016952
-	tst.w	($01cc,a3)
-	bne	L016952
-	move.w	($0006,a4),($0a90,a3)
-	move.l	a3,-(sp)
-	jsr	(SR_スプライトパレット設定_黒)
-L016952:
-	move.w	#$0001,($0a5a,a3)
-	moveq.l	#$01,d0
-L01695a:
-	movem.l	(-$0020,a6),d3/a3-a5
-	unlk	a6
-	rts
+SR_対SHOTヒット・ガード可否判定＆体力減少(p1, p2, shot, d3)
+{
+	if (p2->09e0_予約動作ID == ACT_地上防御 || p2->09e0_予約動作ID == ACT_アイドル && p2->09f0_防御同期値 > 0) {
+		if (shot->hit_info->pt == PTGA_中段) {
+			d1 = 1;
+		} else if (shot->hit_info->pt == PTGA_上段) {
+			if (p2->01bc_しゃがみ状態 == 0) {
+				d1 = 1;
+			}
+		} else if (shot->hit_info->pt == PTGA_下段) {
+			if (p2->01bc_しゃがみ状態) {
+				d1 = 1;
+			}
+		}
+	} else if (p2->09e0_予約動作ID == ACT_空中防御 || (p2->09e0_予約動作ID == ACT_ジャンプ && p2->09f0_防御同期値 > 0)) {
+		if (p2->01b6_表示方向 != shot->drct && shot->hit_info->pt != PTGA_下段) {
+			d1 = 1;
+		}
+	}
 
-L016964:
+	if (d1) {
+		p2->0a5a_xxxx = 1;
+		SR_ガード時ガード動作適用・体力減少(p1, p2, shot->hit_info, 0, 500, 20, d3);
+		return 0;
+	}
+
+	if (SYSCALL_0148_場面取得_エンディング() == 0) {
+		SR_ヒット時くらい動作適用・体力減少(p1, p2, shot->hit_info, 0, 500, d3);
+	} else {
+		a6_mi0010 = 0;
+		a6_mi000c = 0;
+		a6_mi0008 = shot->hit_info->st;
+		a6_mi0002 = 47;
+		SR_ヒット時くらい動作適用・体力減少(p1, p2, 0, 0, 500, d3);
+	}
+
+	if (shot->hit_info->bu > 0 && p2->01cc_敗北状態 == 0) {
+		p2->0a90_燃焼状態 = shot->hit_info->bu;
+		SR_スプライトパレット設定_黒(p2);
+	}
+
+	p2->0a5a_xxxx = 1;
+	return 1;
+}
+
+SR_SHOT消滅攻撃_SHOT接触判定(p1, p2, x1, x2, y1, y2)
+{
 	link	a6,#$0000
 	movem.l	d3-d7/a3-a5,-(sp)
-	movea.w	($0012,a6),a5
-	movea.w	($0016,a6),a4
-	move.w	($001a,a6),d7
-	move.w	($001e,a6),d6
+	movea.w	($0012,a6),a5	;x1
+	movea.w	($0016,a6),a4	;x2
+	move.w	($001a,a6),d7	;y1
+	move.w	($001e,a6),d6	;y2
 	moveq.l	#$00,d5
-	movea.l	($0008,a6),a0
-	move.w	($0a92,a0),d4
-	movea.l	($000c,a6),a0
-	movea.l	($0f08,a0),a3
+	movea.l	($0008,a6),a0	;p1
+	move.w	($0a92,a0),d4	;p1->0a92_SHOT消滅攻撃回数
+	movea.l	($000c,a6),a0	;p2
+	movea.l	($0f08,a0),a3	;p2->0f08_SHOT標準ハンドラ
 	cmpa.w	#$0000,a3
 	beq	L016a68
 L016996:
@@ -24533,57 +23322,58 @@ L016b4a:
 	unlk	a6
 	rts
 
-L016b60:
+SR_SHOT反射攻撃_SHOT接触判定(p1, p2, x1, x2, y1, y2)
+{
 	link	a6,#-$0002
 	movem.l	d3-d7/a3-a5,-(sp)
-	movea.l	($0008,a6),a4
-	move.w	($0012,a6),(-$0002,a6)
-	movea.w	($0016,a6),a5
-	move.w	($001a,a6),d7
-	move.w	($001e,a6),d6
+	movea.l	($0008,a6),a4			;p1
+	move.w	($0012,a6),(-$0002,a6)	;x1
+	movea.w	($0016,a6),a5			;x2
+	move.w	($001a,a6),d7			;y1
+	move.w	($001e,a6),d6			;y2
 	moveq.l	#$00,d5
-	move.w	($1744,a4),d4
-	movea.l	($000c,a6),a0
-	movea.l	($0f08,a0),a3
+	move.w	($1744,a4),d4			;d4 = p1->1744_攻撃設定_SHOT反射回数
+	movea.l	($000c,a6),a0			;p2
+	movea.l	($0f08,a0),a3			;p2->0f08_SHOT標準ハンドラ
 	cmpa.w	#$0000,a3
 	beq	L016c6a
 L016b94:
 	tst.w	d4
 	ble	L016c6a
-	tst.w	($000c,a3)
+	tst.w	($000c,a3)				;shot->state
 	ble	L016c5e
-	tst.w	($000a,a3)
+	tst.w	($000a,a3)				;shot->type
 	beq	L016c5e
-	tst.w	($003e,a3)
+	tst.w	($003e,a3)				;shot->friend
 	beq	L016c5e
-	cmp.w	($002a,a3),d4
+	cmp.w	($002a,a3),d4			;shot->multi
 	blt	L016c5e
-	cmpi.w	#$0001,($0028,a3)
+	cmpi.w	#$0001,($0028,a3)		;shot->drct
 	bne	L016bd6
-	move.w	($000e,a3),d3
-	add.w	($0016,a3),d3
+	move.w	($000e,a3),d3			;shot->pos_x
+	add.w	($0016,a3),d3			;shot->rect_x
 	move.w	d3,d0
-	add.w	($001a,a3),d0
+	add.w	($001a,a3),d0			;shot->rect_w
 	move.w	d0,d2
 	subq.w	#1,d2
 	bra	L016bf4
 L016bd6:
-	move.w	($0012,a3),d0
+	move.w	($0012,a3),d0			;shot->len_x
 	asl.w	#4,d0
-	add.w	($000e,a3),d0
-	move.w	($0016,a3),d1
+	add.w	($000e,a3),d0			;shot->pos_x
+	move.w	($0016,a3),d1			;shot->rect_x
 	addq.w	#1,d1
 	move.w	d0,d2
 	sub.w	d1,d2
 	move.w	d2,d0
-	sub.w	($001a,a3),d0
+	sub.w	($001a,a3),d0			;shot->rect_w
 	move.w	d0,d3
 	addq.w	#1,d3
 L016bf4:
-	move.w	($0010,a3),d1
-	add.w	($0018,a3),d1
+	move.w	($0010,a3),d1			;shot->pos_y
+	add.w	($0018,a3),d1			;shot->rect_y
 	move.w	d1,d0
-	add.w	($001c,a3),d0
+	add.w	($001c,a3),d0			;shot->rect_h
 	subq.w	#1,d0
 	ext.l	d0
 	move.l	d0,-(sp)
@@ -24605,10 +23395,10 @@ L016bf4:
 	lea.l	($0020,sp),sp
 	tst.w	d0
 	beq	L016c5e
-	eori.w	#$0001,($003e,a3)
-	movea.w	($1748,a4),a0
+	eori.w	#$0001,($003e,a3)		;shot->friend
+	movea.w	($1748,a4),a0			;p1->1748_xxxx
 	move.l	a0,-(sp)
-	movea.w	($1746,a4),a0
+	movea.w	($1746,a4),a0			;p1->1746_xxxx
 	move.l	a0,-(sp)
 	pea.l	($000a)
 	move.l	a3,-(sp)
@@ -24618,50 +23408,50 @@ L016bf4:
 	subq.w	#1,d4
 	moveq.l	#$01,d5
 L016c5e:
-	movea.l	($0038,a3),a3
+	movea.l	($0038,a3),a3			;shot->ptr_next
 	cmpa.w	#$0000,a3
 	bne	L016b94
 L016c6a:
-	movea.l	($0f08,a4),a3
+	movea.l	($0f08,a4),a3			;p1->0f08_SHOT標準モジュール
 	cmpa.w	#$0000,a3
 	beq	L016d4a
 L016c76:
 	tst.w	d4
 	ble	L016d4a
-	tst.w	($000c,a3)
+	tst.w	($000c,a3)				;shot->state
 	ble	L016d3e
-	tst.w	($000a,a3)
+	tst.w	($000a,a3)				;shot->type
 	beq	L016d3e
-	tst.w	($003e,a3)
+	tst.w	($003e,a3)				;shot->friend
 	bne	L016d3e
-	cmp.w	($002a,a3),d4
+	cmp.w	($002a,a3),d4			;shot->multi
 	blt	L016d3e
-	cmpi.w	#$0001,($0028,a3)
+	cmpi.w	#$0001,($0028,a3)		;shot->drct
 	bne	L016cb8
-	move.w	($000e,a3),d3
-	add.w	($0016,a3),d3
+	move.w	($000e,a3),d3			;shot->pos_x
+	add.w	($0016,a3),d3			;shot->rect_x
 	move.w	d3,d0
-	add.w	($001a,a3),d0
+	add.w	($001a,a3),d0			;shot->rect_w
 	move.w	d0,d2
 	subq.w	#1,d2
 	bra	L016cd6
 L016cb8:
-	move.w	($0012,a3),d0
+	move.w	($0012,a3),d0			;shot->len_x
 	asl.w	#4,d0
-	add.w	($000e,a3),d0
-	move.w	($0016,a3),d1
+	add.w	($000e,a3),d0			;shot->pos_x
+	move.w	($0016,a3),d1			;shot->rect_x
 	addq.w	#1,d1
 	move.w	d0,d2
 	sub.w	d1,d2
 	move.w	d2,d0
-	sub.w	($001a,a3),d0
+	sub.w	($001a,a3),d0			;shot->rect_w
 	move.w	d0,d3
 	addq.w	#1,d3
 L016cd6:
-	move.w	($0010,a3),d1
-	add.w	($0018,a3),d1
+	move.w	($0010,a3),d1			;shot->pos_y
+	add.w	($0018,a3),d1			;shot->rect_y
 	move.w	d1,d0
-	add.w	($001c,a3),d0
+	add.w	($001c,a3),d0			;shot->rect_h
 	subq.w	#1,d0
 	ext.l	d0
 	move.l	d0,-(sp)
@@ -24683,24 +23473,24 @@ L016cd6:
 	lea.l	($0020,sp),sp
 	tst.w	d0
 	beq	L016d3e
-	eori.w	#$0001,($003e,a3)
-	movea.w	($1748,a4),a0
+	eori.w	#$0001,($003e,a3)		;shot->friend
+	movea.w	($1748,a4),a0			;p1->1748_xxxx
 	move.l	a0,-(sp)
-	movea.w	($1746,a4),a0
+	movea.w	($1746,a4),a0			;p1->1746_xxxx
 	move.l	a0,-(sp)
 	pea.l	($000a)
 	move.l	a3,-(sp)
 	move.l	a4,-(sp)
-	jsr	(SYSCALL_00a8_Shot送信_コマンド)
+	jsr	(SYSCALL_00a8_Shot送信_コマンド(p1, p2)
 	lea.l	($0014,sp),sp
 	subq.w	#1,d4
 	moveq.l	#$01,d5
 L016d3e:
-	movea.l	($0038,a3),a3
+	movea.l	($0038,a3),a3			;shot->ptr_next
 	cmpa.w	#$0000,a3
 	bne	L016c76
 L016d4a:
-	move.w	d4,($1744,a4)
+	move.w	d4,($1744,a4)			;p1->1744_攻撃設定_SHOT反射回数
 	move.w	d5,d0
 	ext.l	d0
 	movem.l	(-$0022,a6),d3-d7/a3-a5
@@ -27039,14 +25829,14 @@ SR_キャラクタ身体・残像・影表示:
 	bgt	L018870
 	move.w	($0006,a5),d2				;X座標
 	move.w	($0008,a5),d4				;Y座標
-	move.w	($001e,a5),d0				;???
+	move.w	($001e,a5),d0				;身体表示SP番号
 	ext.l	d0
 	move.l	d0,d1
 	asl.l	#2,d1						;4倍
-	adda.l	d1,a3						;a3=&一括表示用バッファ_スプライト座標[p1->001e_xxxx];
-	adda.l	d1,a2						;a2=&一括表示用バッファ_スプライトパターン番号[p1->001e_xxxx];
+	adda.l	d1,a3						;a3=&一括表示用バッファ_スプライト座標[p1->001e_身体表示SP番号];
+	adda.l	d1,a2						;a2=&一括表示用バッファ_スプライトパターン番号[p1->001e_身体表示SP番号];
 	add.l	d0,d0						;2倍
-	adda.l	d0,a1						;a1=&一括表示用バッファ_スプライト表示フラグ[p1->001e_xxxx];
+	adda.l	d0,a1						;a1=&一括表示用バッファ_スプライト表示フラグ[p1->001e_身体表示SP番号];
 	cmpi.w	#$0001,($000a,a5)			;プレイヤー番号
 	bne	L018864
 	move.w	(L0200a0),d3				;1pのときL0200a0の値に0x100加算
@@ -29333,61 +28123,31 @@ L019f2e:
 	move.l	#$00010001,(a0)
 	rts
 
-L019f60:
-	movem.l	d3/a3,-(sp)
-	movea.l	($000c,sp),a3
-	subq.w	#1,($0a90,a3)					;燃焼値デクリメント
-	tst.w	($0a90,a3)
-	ble	L019fcc
-	move.w	($000a,a3),d0					;プレイヤー番号
-	ext.l	d0
-	lea.l	(L0200b2),a0
-	add.l	d0,d0
-	move.w	(a0,d0.l),d3
-	cmp.w	#$0001,d3
-	bgt	L019f8e
-	moveq.l	#$00,d0
-	bra	L019fa0
-L019f8e:
-	cmp.w	#$0003,d3
-	ble	L019f9e
-	cmp.w	#$0005,d3
-	bgt	L019f9e
-	moveq.l	#$02,d0
-	bra	L019fa0
-L019f9e:
-	moveq.l	#$01,d0
-L019fa0:
-	addq.w	#1,d3
-	cmp.w	#$0007,d3
-	ble	L019faa
-	moveq.l	#$00,d3
-L019faa:
-	ext.l	d0
-	move.l	d0,-(sp)
-	move.l	a3,-(sp)
-	jsr	(SYSCALL_015c_Pal設定_身体燃焼色)
-	addq.w	#8,sp
-	move.w	($000a,a3),d0
-	ext.l	d0
-	lea.l	(L0200b2),a0
-	add.l	d0,d0
-	move.w	d3,(a0,d0.l)
-	bra	L019fe6
-L019fcc:
-	tst.w	($01b4,a3)
-	bne	L019fdc
-	move.l	a3,-(sp)
-	jsr	(SR_キャラクター身体パレット設定)
-	bra	L019fe4
-L019fdc:
-	move.l	a3,-(sp)
-	jsr	(L019eb2)
-L019fe4:
-	addq.w	#4,sp
-L019fe6:
-	movem.l	(sp)+,d3/a3
-	rts
+SR_身体燃焼パレット_カウンタ更新・適用(p1)
+{
+	if (--p1->0a90_燃焼状態 > 0) {
+		d3 = L0200b2[p1->000a_プレイヤー番号 * 2];
+		if (d3 <= 1) {
+			d0 = 0;
+		} else if (d3 <= 3 || d3 > 5) {
+			d0 = 1;
+		} else {
+			d0 = 2;
+		}
+
+		if (++d3 > 7)
+			d3 = 0;
+
+		SYSCALL_015c_Pal設定_身体燃焼色(p1, d0);
+		L0200b2[p1->000a_プレイヤー番号*2] = d3;
+		return;
+	}
+
+	if (p1->01b4_変身状態 == 0)
+		SR_キャラクター身体パレット設定(p1);
+	else
+		L019eb2(p1);
+}
 
 L019fec:
 	movea.l	($0004,sp),a0
@@ -30576,11 +29336,11 @@ L01ad20:
 	tst.w	(-$000c,a0)
 	beq	L01ad4c
 	lea.l	(-$000e,a0),a0
-	move.w	(a0),(L02025a)
+	move.w	(a0),(ステージパレット_グラデーションカウンタ)
 	addq.w	#1,(a0)
 	bra	L01ad52
 L01ad4c:
-	clr.w	(L02025a)
+	clr.w	(ステージパレット_グラデーションカウンタ)
 L01ad52:
 	lea.l	(SFSYSINFO_0044_xxxx),a0
 	cmpi.w	#$0017,(a0)
@@ -30599,11 +29359,11 @@ SR_ステージパレット反映:
 	move.l	a3,-(sp)
 	tst.w	(SFSYSINFO_0046_時間経過有効)
 	bne	L01ad88
-	clr.w	(L02025a)
+	clr.w	(ステージパレット_グラデーションカウンタ)
 L01ad88:
 	pea.l	($0080)
 	pea.l	($0000)
-	move.w	(L02025a),d0
+	move.w	(ステージパレット_グラデーションカウンタ),d0
 	ext.l	d0
 	moveq.l	#$09,d1
 	asl.l	d1,d0
@@ -30614,11 +29374,11 @@ L01ad88:
 	lea.l	($000c,sp),sp
 	pea.l	($0080)
 	pea.l	($0080)
-	move.w	(L02025a),d0
+	move.w	(ステージパレット_グラデーションカウンタ),d0
 	ext.l	d0
 	moveq.l	#$09,d1
 	asl.l	d1,d0
-	add.l	#L072100,d0
+	add.l	#パレットデータ_背景2_カラーA,d0
 	move.l	d0,-(sp)
 	jsr	(a3)
 	lea.l	($000c,sp),sp
@@ -30657,25 +29417,25 @@ SR_ステージパレットデータセット読み込み(セレクト番号)
 	SR_ステージデータファイルパス構築(セレクト番号, "BACK2C.PAL", a6_mi0080);
 	SR_グラフィックパレットファイル読み込み(パレットデータ_背景1_カラーB+0x1100, 0x80, a6_mi0080);
 
-	L01af8e(0x00, 0x00, 0x08);
-	L01af8e(0x00, 0x08, 0x10);
-	L01af8e(0x00, 0x10, 0x00);
-	L01af8e(0x80, 0x00, 0x08);
-	L01af8e(0x80, 0x08, 0x10);
-	L01af8e(0x80, 0x10, 0x00);
+	SR_ステージパレット補間データ作成(0x00, 0x00, 0x08);
+	SR_ステージパレット補間データ作成(0x00, 0x08, 0x10);
+	SR_ステージパレット補間データ作成(0x00, 0x10, 0x00);
+	SR_ステージパレット補間データ作成(0x80, 0x00, 0x08);
+	SR_ステージパレット補間データ作成(0x80, 0x08, 0x10);
+	SR_ステージパレット補間データ作成(0x80, 0x10, 0x00);
 }
 
-L01af8e:
+SR_ステージパレット補間データ作成:
 	link	a6,#-$0128
 	movem.l	d3-d7/a3-a5,-(sp)
-	move.w	($000a,a6),(-$0002,a6)
-	move.w	($0012,a6),(-$0004,a6)
-	move.w	#$007f,(-$0006,a6)
-	move.w	($000e,a6),d0
+	move.w	($000a,a6),(-$0002,a6)		;a6_mi0002 = arg1
+	move.w	($0012,a6),(-$0004,a6)		;a6_mi0004 = arg3
+	move.w	#$007f,(-$0006,a6)			;a6_mi0006 = 127
+	move.w	($000e,a6),d0				;d0 = arg2
 	ext.l	d0
 	moveq.l	#$09,d2
-	asl.l	d2,d0
-	move.l	d0,(-$000e,a6)
+	asl.l	d2,d0						;512倍
+	move.l	d0,(-$000e,a6)				;a6_mi000e = arg2 * 512
 	moveq.l	#$00,d2
 	move.l	d2,(-$0012,a6)
 	move.l	d2,(-$0022,a6)
@@ -30685,8 +29445,8 @@ L01af8e:
 	move.l	d2,(-$004a,a6)
 	move.l	d2,(-$004e,a6)
 	move.l	d0,d2
-	add.l	#L072e00,d2
-	move.l	d2,(-$011e,a6)
+	add.l	#パレットデータ_背景1_カラーA7,d2
+	move.l	d2,(-$011e,a6)				;a6_mi011e = パレットデータ_背景1_カラーA7 + arg2 * 512
 L01afe0:
 	movea.w	(-$0002,a6),a0
 	adda.w	#$007f,a0
@@ -30834,7 +29594,7 @@ L01afe0:
 	move.l	(-$0062,a6),d2
 	or.l	d2,(-$000a,a6)
 	move.l	(-$000e,a6),d2
-	add.l	#L072200,d2
+	add.l	#パレットデータ_背景1_カラーA1,d2
 	move.l	d2,(-$0122,a6)
 	move.w	(-$0008,a6),(a0,d2.l)
 	move.l	(-$001e,a6),d2
@@ -30883,7 +29643,7 @@ L01afe0:
 	move.l	(-$008e,a6),d2
 	or.l	d2,(-$000a,a6)
 	move.l	(-$000e,a6),d2
-	add.l	#L072400,d2
+	add.l	#パレットデータ_背景1_カラーA2,d2
 	move.l	d2,(-$0122,a6)
 	move.w	(-$0008,a6),(a0,d2.l)
 	move.l	(-$001a,a6),d2
@@ -30936,7 +29696,7 @@ L01afe0:
 	move.l	(-$00ba,a6),d2
 	or.l	d2,(-$000a,a6)
 	move.l	(-$000e,a6),d2
-	add.l	#L072600,d2
+	add.l	#パレットデータ_背景1_カラーA3,d2
 	move.l	d2,(-$0122,a6)
 	move.w	(-$0008,a6),(a0,d2.l)
 	move.l	(-$0012,a6),d2
@@ -30988,7 +29748,7 @@ L01afe0:
 	move.l	(-$00ee,a6),d2
 	or.l	d2,(-$000a,a6)
 	move.l	(-$000e,a6),d2
-	add.l	#L072800,d2
+	add.l	#パレットデータ_背景1_カラーA4,d2
 	move.l	d2,(-$0122,a6)
 	move.w	(-$0008,a6),(a0,d2.l)
 	move.w	a1,(-$0010,a6)
@@ -31081,7 +29841,7 @@ L01afe0:
 	move.l	(-$011a,a6),d2
 	or.l	d2,(-$000a,a6)
 	move.l	(-$000e,a6),d2
-	add.l	#L072a00,d2
+	add.l	#パレットデータ_背景1_カラーA5,d2
 	move.l	d2,(-$0122,a6)
 	move.w	(-$0008,a6),(a0,d2.l)
 	move.w	a1,(-$0010,a6)
@@ -37547,7 +36307,7 @@ L0201f8:
 	.dc.b	$07,$00,$07,$40,$07,$80,$07,$c0
 体力ゲージ点滅カウンタ:
 	.dc.w	$001f
-L02025a:
+ステージパレット_グラデーションカウンタ:
 	.dc.w	$0000
 L02025c:
 	.dc.w	$0000
@@ -37722,7 +36482,7 @@ WORK_1P_001c_xxxx:
 	.ds.b	8
 WORK_1P_0024_xxxx:
 	.ds.b	8
-L021484:
+WORK_1P_002c_勝ち数:
 	.ds.w	1
 WORK_1P_002e_残り体力:
 	.ds.w	1
@@ -37738,7 +36498,7 @@ WORK_1P_01cc_敗北状態:
 	.ds.b	1034
 WORK_1P_05d6_多重化指定値:
 	.ds.b	8
-L021a36:
+WORK_1P_05de_超技実行中フラグ:
 	.ds.b	998
 WORK_1P_09c4_VCT_超技ゲージ表示処理:
 	.ds.b	4
@@ -37804,13 +36564,13 @@ WORK_2P_0008_Y座標:
 	.ds.b	4
 WORK_2P_000c_セレクト番号:
 	.ds.b	16
-L033210:
+WORK_2P_001c_xxxx:
 	.ds.b	8
 WORK_2P_0024_xxxx:
 	.ds.b	8
-L033220:
+WORK_2P_002c_勝ち数:
 	.ds.w	1
-L033222:
+WORK_2P_002e_残り体力:
 	.ds.w	1
 L033224:
 	.ds.b	2
@@ -37820,7 +36580,7 @@ WORK_2P_01c6_硬直時間:
 	.ds.b	6
 WORK_2P_01cc_敗北状態:
 	.ds.b	1042
-L0337d2:
+WORK_2P_05de_超技実行中フラグ:
 	.ds.b	998
 WORK_2P_09c4_VCT_超技ゲージ表示処理:
 	.ds.b	4
@@ -37838,7 +36598,7 @@ WORK_2P_0a70_ヒットマークアニメーションカウンタ:
 	.ds.b	22
 L033c7a:
 	.ds.b	10
-L033c84:
+WORK_2P_0a90_燃焼状態:
 	.ds.b	8
 WORK_2P_0a98:
 	.ds.b	42
@@ -38176,19 +36936,19 @@ L071f20:
 	.ds.b	224
 パレットデータ_背景1_カラーA:
 	.ds.b	256
-L072100:
+パレットデータ_背景2_カラーA:
 	.ds.b	256
-L072200:
+パレットデータ_背景1_カラーA1:
 	.ds.b	512
-L072400:
+パレットデータ_背景1_カラーA2:
 	.ds.b	512
-L072600:
+パレットデータ_背景1_カラーA3:
 	.ds.b	512
-L072800:
+パレットデータ_背景1_カラーA4:
 	.ds.b	512
-L072a00:
+パレットデータ_背景1_カラーA5:
 	.ds.b	1024
-L072e00:
+パレットデータ_背景1_カラーA7:
 	.ds.b	512
 パレットデータ_背景1_カラーB:
 	.ds.b	8192
