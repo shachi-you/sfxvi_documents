@@ -1002,7 +1002,7 @@ L001806(p1, p2)
 		SR_キャラ動作関数実行(p1, SUB_直立);
 		SR_キャラ動作関数実行(p2, SUB_直立);
 
-		L015c8c(WORK_1P_0000, WORK_2P_0000);
+		SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(WORK_1P_0000, WORK_2P_0000);
 
 		SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
 		SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
@@ -1020,7 +1020,7 @@ L001806(p1, p2)
 		SR_キャラ動作関数実行(p1, SUB_判定負け);
 		SR_キャラ動作関数実行(p2, SUB_判定負け);
 
-		L015c8c(WORK_1P_0000, WORK_2P_0000);
+		SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(WORK_1P_0000, WORK_2P_0000);
 
 		SR_キャラ動作関数実行(WORK_1P_0000, OPT_サイクル２);
 		SR_キャラ動作関数実行(WORK_2P_0000, OPT_サイクル２);
@@ -1070,7 +1070,7 @@ L001986:
 		SR_STC_TRG_直接状態更新(WORK_1P_0000);
 		SR_STC_TRG_直接状態更新(WORK_2P_0000);
 
-		L015c8c(WORK_1P_0000, WORK_2P_0000);
+		SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(WORK_1P_0000, WORK_2P_0000);
 
 		if (WORK_1P_1756_セル非表示フラグ == 0)
 			SYSCALL_0000_セル設定_表示(WORK_1P_0000, WORK_1P_09ea_セル番号);
@@ -1145,7 +1145,7 @@ L001b72:
 		SR_STC_TRG_直接状態更新(WORK_1P_0000);
 		SR_STC_TRG_直接状態更新(WORK_2P_0000);
 
-		L015c8c(WORK_1P_0000, WORK_2P_0000);
+		SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(WORK_1P_0000, WORK_2P_0000);
 
 		if (WORK_1P_1756_セル非表示フラグ == 0)
 			SYSCALL_0000_セル設定_表示(WORK_1P_0000, WORK_1P_09ea_セル番号);
@@ -6444,7 +6444,7 @@ L006b78:
 	move.w	($0012,a6),d0
 	bne	L006c68
 L006b90:
-	L009c70();
+	SR_バトルフレーム後半処理();
 	if (p1->01cc_敗北状態) {
 		if (L001e86(p1, p2) && L001308(p1, p2)) return 1;
 	} else if (p2->01cc_敗北状態) {
@@ -6495,7 +6495,7 @@ L006cc4:
 	bgt	@f
 	move.w	#$003c,(L01fef2)
 @@:
-	L009c70();
+	SR_バトルフレーム後半処理();
 	tst.l	($0ad0,a4)	;p1->0ad0_xxxx
 	bne	L006e66
 	tst.l	($0ad0,a5)	;p2->0ad0_xxxx
@@ -6743,7 +6743,7 @@ L00705e(d0, a6)
 	SR_STC_TRG_直接状態更新(WORK_3P_0000);
 	SR_STC_TRG_直接状態更新(WORK_4P_0000);
 
-	L015c8c(WORK_3P_0000, WORK_4P_0000);
+	SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(WORK_3P_0000, WORK_4P_0000);
 
 	if (WORK_3P_0ac2_気集中 == 0 && WORK_4P_0ac2_気集中 == 0) {
 		if (WORK_3P_0A90_燃焼状態 > 0)
@@ -6874,7 +6874,7 @@ L007342:
 			SR_STC_TRG_直接状態更新(p1);
 			SR_STC_TRG_直接状態更新(p2);
 
-			L015c8c(p1, p2);
+			SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(p1, p2);
 
 			if (p1->0ac2_気集中 == 0 && p2->0ac2_気集中 == 0) {
 				if (p1->0a90_燃焼状態 > 0)
@@ -6962,7 +6962,7 @@ L007342:
 			SR_STC_TRG_直接状態更新(p1);
 			SR_STC_TRG_直接状態更新(p2);
 
-			L015c8c(p1, p2);
+			SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(p1, p2);
 
 			if (p1->0ac2_気集中 == 0 && p2->0ac2_気集中 == 0) {
 				if (p1->0a90_燃焼状態 > 0)
@@ -7041,7 +7041,7 @@ L007342:
 			SR_STC_TRG_直接状態更新
 			SR_STC_TRG_直接状態更新
 
-			L015c8c(p1, p2);
+			SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(p1, p2);
 
 			if (p1->1756_セル非表示フラグ == 0)
 				SYSCALL_0000_セル設定_表示(p1, p1->09ea_表示セルID);
@@ -7089,7 +7089,7 @@ L007342:
 			SR_STC_TRG_直接状態更新(p1);
 			SR_STC_TRG_直接状態更新(p2);
 
-			L015c8c(p1, p2);
+			SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(p1, p2);
 
 			if (p1->1756_セル非表示フラグ == 0)
 				SYSCALL_0000_セル設定_表示(p1, p1->09ea_表示セルID);
@@ -8897,7 +8897,7 @@ L009c42:
 	movem.l	(sp)+,d3-d4/a3
 	rts
 
-L009c70()
+SR_バトルフレーム後半処理()
 {
 	処理順制御フラグ ^= 1;
 	if (処理順制御フラグ == 0)
@@ -8909,7 +8909,7 @@ L009c70()
 	WORK_2P_1324_思考完了 = 0;
 	WORK_1P_1740_防御キャンセル可能フラグ = 0;
 	WORK_2P_1740_防御キャンセル可能フラグ = 0;
-	if (WORK_1P_01c8_xxxx > 0 || WORK_2P_01c8_xxxx > 0) {
+	if (WORK_1P_01c6_硬直時間 > 0 || WORK_2P_01c6_硬直時間 > 0) {
 		SFSYSINFO_0078_ヒットストップ = 1;
 		WORK_1P_01c6_硬直時間--;
 		WORK_2P_01c6_硬直時間--;
@@ -8925,16 +8925,16 @@ L009c70()
 
 		if (処理順制御フラグ == 0) {
 			SR_SHOT実行_CMD状態変化・表示(WORK_1P_0000, WORK_2P_0000);
-			L00d2dc(WORK_1P_0000, WORK_2P_0000);
-			L00d2dc(WORK_2P_0000, WORK_1P_0000);
+			SR_防御許可フラグ設定・キャラ動作関数実行(WORK_1P_0000, WORK_2P_0000);
+			SR_防御許可フラグ設定・キャラ動作関数実行(WORK_2P_0000, WORK_1P_0000);
 			SR_キュー更新・コマンド判定呼び出し・投げ成立判定(WORK_1P_0000, WORK_2P_0000);
-			L015c8c(WORK_1P_0000, WORK_2P_0000);
+			SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(WORK_1P_0000, WORK_2P_0000);
 		} else {
 			SR_SHOT実行_CMD状態変化・表示(WORK_2P_0000, WORK_1P_0000);
-			L00d2dc(WORK_2P_0000, WORK_1P_0000);
-			L00d2dc(WORK_1P_0000, WORK_2P_0000);
+			SR_防御許可フラグ設定・キャラ動作関数実行(WORK_2P_0000, WORK_1P_0000);
+			SR_防御許可フラグ設定・キャラ動作関数実行(WORK_1P_0000, WORK_2P_0000);
 			SR_キュー更新・コマンド判定呼び出し・投げ成立判定(WORK_2P_0000, WORK_1P_0000);
-			L015c8c(WORK_2P_0000, WORK_1P_0000);
+			SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(WORK_2P_0000, WORK_1P_0000);
 		}
 
 		if (WORK_1P_0ac2_気集中 == 0 && WORK_2P_0ac2_気集中 == 0) {
@@ -9011,6 +9011,7 @@ L009c70()
 		L0040d0(WORK_1P_0000, WORK_2P_0000);
 		L0040d0(WORK_2P_0000, WORK_1P_0000);
 	} else {
+		//ヒットストップ中に実行される処理
 		if (WORK_1P_01cc_敗北状態 || (WORK_2P_01cc_敗北状態)) {
 			if (SFSYSINFO_0078_ヒットストップ <= 1) {
 				SFSYSINFO_0078_ヒットストップ = 0;
@@ -9025,7 +9026,6 @@ L009c70()
 
 				WORK_1P_001c_xxxx = 0;
 				WORK_2P_001c_xxxx = 0;
-				goto L00a20a;
 			} else {
 				if (SFSYSINFO_003a_xxxx >= 0) {
 					SFSYSINFO_003a_xxxx = 1;
@@ -10372,7 +10372,7 @@ L00ba56:
 	addq.w	#8,sp
 	pea.l	(WORK_2P_0000)
 	pea.l	(WORK_1P_0000)
-	lea.l	(L00d2dc),a3
+	lea.l	(SR_防御許可フラグ設定・キャラ動作関数実行),a3
 	jsr	(a3)
 	addq.w	#8,sp
 	pea.l	(WORK_1P_0000)
@@ -10385,7 +10385,7 @@ L00ba56:
 	addq.w	#8,sp
 	pea.l	(WORK_2P_0000)
 	pea.l	(WORK_1P_0000)
-	jsr	(L015c8c)
+	jsr	(SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少)
 	addq.w	#8,sp
 	tst.w	(-$0460,a4)
 	bne	L00bb3a
@@ -10758,7 +10758,7 @@ L00bfe2:
 L00bfec:
 	move.l	d3,-(sp)
 	move.l	a3,-(sp)
-	jsr	(L015c8c)
+	jsr	(SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少)
 	addq.w	#8,sp
 	move.l	d3,-(sp)
 	move.l	a3,-(sp)
@@ -12055,7 +12055,7 @@ L00d2d2:
 	unlk	a6
 	rts
 
-L00d2dc(p1, p2)
+SR_防御許可フラグ設定・キャラ動作関数実行(p1, p2)
 {
 	// p2のみ気集中状態の時終了
 	if (p2->0ac2_気集中 && p1->0ac2_気集中 <= 0)
@@ -22146,7 +22146,7 @@ SR_SHOT実行_CMD状態変化・表示:
 	movem.l	(sp)+,a3-a5
 	rts
 
-L015c8c(p1, p2)
+SR_SHOT対SHOT・SHOT対キャラ接触判定・体力減少(p1, p2)
 {
 	if (p1->0a4c_xxxx) {
 		a0 = p1->0f08_SHOT標準ハンドラ;
