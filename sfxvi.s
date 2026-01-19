@@ -5502,9 +5502,9 @@ L005e80:
 	.dc.b	'ENDING',$00,$00
 L005e88:
 	movem.l	d3-d4/a3-a6,-(sp)
-	movea.l	($001c,sp),a6
-	move.l	($0020,sp),d4
-	move.w	($0026,sp),d3
+	movea.l	($001c,sp),a6			;p1
+	move.l	($0020,sp),d4			;p2
+	move.w	($0026,sp),d3			;mode
 	lea.l	(SFSYSINFO_0070_XXXX),a0
 	clr.w	(a0)
 	tst.w	d3
@@ -5525,21 +5525,21 @@ L005eae:
 	tst.w	(a0)
 	bne	L005fbc
 L005f02:
-	clr.w	($001a,a6)
+	clr.w	($001a,a6)			;p1->001a_同キャラ識別番号
 	movea.l	d4,a1
-	clr.w	($001a,a1)
-	clr.w	($002a,a6)
-	clr.w	($002a,a1)
+	clr.w	($001a,a1)			;p2->001a_同キャラ識別番号
+	clr.w	($002a,a6)			;p1->002a_xxxx
+	clr.w	($002a,a1)			;p2->002a_xxxx
 	lea.l	(SFSYSINFO_0014_xxxx),a0
 	cmpi.w	#$ffff,(a0)
 	bne	L005f74
-	move.w	#$0100,($0468,a0)
+	move.w	#$0100,($0468,a0)	;SFSYSINFO_047c_セレクタ_動作モード = SEL_MODE_新規;
 
-	SYSCALL_0230_Sel設定_キャラクタ番号(a6, 1);
-	SYSCALL_0230_Sel設定_キャラクタ番号(d4, 1);
+	SYSCALL_0230_Sel設定_キャラクタ番号(p1, 1);
+	SYSCALL_0230_Sel設定_キャラクタ番号(p2, 1);
 
-	SYSCALL_0250_Sel設定_ストーリー番号(a6, 1);
-	SYSCALL_0250_Sel設定_ストーリー番号(d4, 1);
+	SYSCALL_0250_Sel設定_ストーリー番号(p1, 1);
+	SYSCALL_0250_Sel設定_ストーリー番号(p2, 1);
 
 	SYSCALL_0238_Sel設定_ステージ番号(1);
 	SYSCALL_023c_Sel設定_全体ストーリー番号(1);
@@ -5549,24 +5549,24 @@ L005f74:
 	lea.l	(SFSYSINFO_0472_xxxx),a0
 	tst.w	(a0)
 	beq	L005f84
-	move.w	#$0800,($000a,a0)
+	move.w	#$0800,($000a,a0)	;SFSYSINFO_047c_セレクタ_動作モード = SEL_MODE_継続
 L005f84:
-	tst.w	($0a86,a6)
+	tst.w	($0a86,a6)			;p1->0a86_CPU制御状態
 	bne	L005f92
-	ori.w	#$0001,(SFSYSINFO_047c_セレクタ動作モード)
+	ori.w	#$0001,(SFSYSINFO_047c_セレクタ動作モード)	;SFSYSINFO_047c_セレクタ動作モード |= SEL_MODE_CHAR1;
 L005f92:
 	movea.l	d4,a1
-	tst.w	($0a86,a1)
+	tst.w	($0a86,a1)			;p2->0a86_CPU制御状態
 	bne	L005fa2
-	ori.w	#$0002,(SFSYSINFO_047c_セレクタ動作モード)
+	ori.w	#$0002,(SFSYSINFO_047c_セレクタ動作モード)	;SFSYSINFO_047c_セレクタ動作モード |= SEL_MODE_CHAR2;
 L005fa2:
 	lea.l	(SFSYSINFO_0066_xxxx),a0
 	tst.w	(a0)
 	bne	L005fb4
-	ori.w	#$0008,($0416,a0)
+	ori.w	#$0008,($0416,a0)	;SFSYSINFO_047c_セレクタ動作モード |= SEL_MODE_STORY;
 	bra	L005fbc
 L005fb4:
-	ori.w	#$0004,(SFSYSINFO_047c_セレクタ動作モード)
+	ori.w	#$0004,(SFSYSINFO_047c_セレクタ動作モード)	;SFSYSINFO_047c_セレクタ動作モード |= SEL_MODE_STAGE;
 L005fbc:
 	lea.l	(SFSYSINFO_047c_セレクタ動作モード),a0
 	btst.b	#$00,(a0)
@@ -8927,13 +8927,13 @@ L009c70()
 			SR_SHOT実行_CMD状態変化・表示(WORK_1P_0000, WORK_2P_0000);
 			L00d2dc(WORK_1P_0000, WORK_2P_0000);
 			L00d2dc(WORK_2P_0000, WORK_1P_0000);
-			SR_投げ成立チェック(WORK_1P_0000, WORK_2P_0000);
+			SR_キュー更新・コマンド判定呼び出し・投げ成立判定(WORK_1P_0000, WORK_2P_0000);
 			L015c8c(WORK_1P_0000, WORK_2P_0000);
 		} else {
 			SR_SHOT実行_CMD状態変化・表示(WORK_2P_0000, WORK_1P_0000);
 			L00d2dc(WORK_2P_0000, WORK_1P_0000);
 			L00d2dc(WORK_1P_0000, WORK_2P_0000);
-			SR_投げ成立チェック(WORK_2P_0000, WORK_1P_0000);
+			SR_キュー更新・コマンド判定呼び出し・投げ成立判定(WORK_2P_0000, WORK_1P_0000);
 			L015c8c(WORK_2P_0000, WORK_1P_0000);
 		}
 
@@ -9061,12 +9061,12 @@ L009c70()
 			SR_SHOT実行_CMD状態変化・表示(WORK_1P_0000, WORK_2P_0000);
 			SYSCALL_0000_セル設定_表示(WORK_1P_0000, WORK_1P_09ea_セル番号);
 			SYSCALL_0000_セル設定_表示(WORK_2P_0000, WORK_2P_09ea_セル番号);
-			SR_投げ成立チェック(WORK_1P_0000, WORK_2P_0000);
+			SR_キュー更新・コマンド判定呼び出し・投げ成立判定(WORK_1P_0000, WORK_2P_0000);
 		} else {
 			SR_SHOT実行_CMD状態変化・表示(WORK_2P_0000, WORK_1P_0000);
 			SYSCALL_0000_セル設定_表示(WORK_2P_0000, WORK_2P_09ea_セル番号);
 			SYSCALL_0000_セル設定_表示(WORK_1P_0000, WORK_1P_09ea_セル番号);
-			SR_投げ成立チェック(WORK_2P_0000, WORK_1P_0000);
+			SR_キュー更新・コマンド判定呼び出し・投げ成立判定(WORK_2P_0000, WORK_1P_0000);
 		}
 
 		if (WORK_1P_0ac2_気集中 == 0 && WORK_2P_0ac2_気集中 == 0) {
@@ -9745,16 +9745,13 @@ SYSCALL_0250_Sel設定_ストーリー番号:
 	move.w	($000a,sp),($176c,a0)
 	rts
 
-SYSCALL_0234_Sel設定_同キャラ識別番号:
-	movea.l	($0004,sp),a1
-	move.w	($000a,sp),d0
-	movea.l	($132a,a1),a0
-	tst.w	($002a,a0)
-	bne	L00b250
-	move.w	#$0001,($002a,a1)
-L00b250:
-	move.w	d0,($001a,a1)
-	rts
+SYSCALL_0234_Sel設定_同キャラ識別番号(p1, num)
+{
+	p2 = p1->132a_相手ハンドラ;
+	if (p2->002a_xxxx)
+		p1->002a_xxxx = 1;
+	p1->001a_同キャラ識別番号 = num;
+}
 
 SYSCALL_0238_Sel設定_ステージ番号:
 	move.w	($0006,sp),(SFSYSINFO_047a_現在ステージ番号)
@@ -16601,7 +16598,7 @@ L010e52:
 	addq.w	#4,sp
 	rts
 
-SR_投げ成立チェック(p1, p2)
+SR_キュー更新・コマンド判定呼び出し・投げ成立判定(p1, p2)
 {
 	SR_STC_TRG_直接状態更新(p1);
 	SR_STC_TRG_直接状態更新(p2);
